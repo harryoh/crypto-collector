@@ -77,3 +77,10 @@ func (client *Client) MinuteCandles(
 	err = util.Request(client.httpClient, options, &candles)
 	return
 }
+
+// LastPrice :
+func (client *Client) LastPrice(
+	market string,
+) (candles []*types.MinuteCandle, err error) {
+	return client.MinuteCandles(1, market)
+}
