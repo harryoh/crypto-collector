@@ -60,7 +60,9 @@ func (client *Client) Tickers(
 	return
 }
 
-// // LastPrice :
-// func (client *Client) LastPrice() (candles []*types.MinuteCandle, err error) {
-// 	return client.MinuteCandles(1, "KRW-BTC")
-// }
+// LastPrice :
+func (client *Client) LastPrice(
+	symbol string,
+) (tickers *types.Tickers, err error) {
+	return client.Tickers(symbol)
+}
