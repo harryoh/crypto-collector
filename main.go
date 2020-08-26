@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/harryoh/crypto-collector/bybit"
 	"github.com/harryoh/crypto-collector/currency"
 	"github.com/harryoh/crypto-collector/upbit"
+	"github.com/joho/godotenv"
 	"github.com/muesli/cache2go"
 )
 
@@ -29,7 +31,8 @@ type Prices struct {
 	UpbitPrice   Price
 	BithumbPrice Price
 	BybitPrice   Price
-	UsdKRW       Price
+	UsdKrw       Price
+	CreatedAt    int64
 }
 
 func upbitLastPrice(sleep time.Duration, c chan Price) {
@@ -45,7 +48,7 @@ func upbitLastPrice(sleep time.Duration, c chan Price) {
 			continue
 		}
 		val.Price = upbitTicker[0].TradePrice
-		val.Timestamp = upbitTicker[0].Timestamp
+		val.Timestamp = upbitTicker[0].Timestamp / 1000
 		c <- *val
 		time.Sleep(sleep * time.Second)
 	}
@@ -187,24 +190,39 @@ func allPrices(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	prices.UsdKRW = data.Data().(Price)
+	prices.UsdKrw = data.Data().(Price)
+
+	prices.CreatedAt = time.Now().Unix()
 
 	res, err := json.Marshal(prices)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
+
 	w.Write(res)
 }
 
 func main() {
 	cache := _cache()
-	period := map[string]time.Duration{
-		"upbit":   5,
-		"bithumb": 6,
-		"bybit":   4,
-		"usdkrw":  600,
+	period := map[string]time.Duration{}
+	err := godotenv.Load()
+	if err != nil {
+		period["upbit"] = 5
+		period["bithumb"] = 6
+		period["bybit"] = 4
+		period["usdkrw"] = 600
+	} else {
+		upbitPeriod, _ := strconv.Atoi(os.Getenv("UpbitPeriodSeconds"))
+		period["upbit"] = time.Duration(upbitPeriod)
+		bithumbPeriod, _ := strconv.Atoi(os.Getenv("BithumbPeriodSeconds"))
+		period["bithumb"] = time.Duration(bithumbPeriod)
+		bybitPeriod, _ := strconv.Atoi(os.Getenv("BybitPeriodSeconds"))
+		period["bybit"] = time.Duration(bybitPeriod)
+		usdkrwPeriod, _ := strconv.Atoi(os.Getenv("UsdKrwPeriodSeconds"))
+		period["usdkrw"] = time.Duration(usdkrwPeriod)
 	}
+
 	go func() {
 		ch := make(chan Price)
 
