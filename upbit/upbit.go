@@ -60,6 +60,7 @@ func (client *Client) MinuteCandles(
 
 	query := map[string]string{
 		"market": market,
+		"count":  "1",
 	}
 
 	if len(params) > 0 {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/harryoh/crypto-collector/bithumb"
 	"github.com/harryoh/crypto-collector/bybit"
 	"github.com/harryoh/crypto-collector/currency"
 	"github.com/harryoh/crypto-collector/upbit"
@@ -21,6 +22,14 @@ type Price struct {
 	Symbol    string
 	Price     float64
 	Timestamp int64
+}
+
+// Prices :
+type Prices struct {
+	UpbitPrice   Price
+	BithumbPrice Price
+	BybitPrice   Price
+	UsdKRW       Price
 }
 
 func upbitLastPrice(sleep time.Duration, c chan Price) {
@@ -42,6 +51,27 @@ func upbitLastPrice(sleep time.Duration, c chan Price) {
 	}
 }
 
+func bithumbLastPrice(sleep time.Duration, c chan Price) {
+	val := &Price{
+		Name:   "bithumb",
+		Symbol: "BTC_KRW",
+	}
+	for {
+		bithumbClient := bithumb.NewClient()
+		bithumbTxHistory, err := bithumbClient.LastPrice(val.Symbol)
+		if err != nil {
+			fmt.Print(err)
+			return
+		}
+		price, _ := strconv.ParseFloat(bithumbTxHistory.Data[0].Price, 64)
+		val.Price = price
+		val.Timestamp = time.Now().Unix()
+
+		c <- *val
+		time.Sleep(sleep * time.Second)
+	}
+}
+
 func bybitLastPrice(sleep time.Duration, c chan Price) {
 	val := &Price{
 		Name:   "bybit",
@@ -55,7 +85,7 @@ func bybitLastPrice(sleep time.Duration, c chan Price) {
 			return
 		}
 		price, _ := strconv.ParseFloat(bybitTicker.Result[0].LastPrice, 64)
-		timestamp, _ := strconv.Atoi(bybitTicker.TimeNow)
+		timestamp, _ := strconv.ParseFloat(bybitTicker.TimeNow, 64)
 		val.Price = price
 		val.Timestamp = int64(timestamp)
 
@@ -121,17 +151,65 @@ func lastPrice(w http.ResponseWriter, r *http.Request) {
 	w.Write(res)
 }
 
+func allPrices(w http.ResponseWriter, r *http.Request) {
+	cache := _cache()
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	var data *cache2go.CacheItem
+	var err error
+	prices := &Prices{}
+
+	data, err = cache.Value("upbit")
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	prices.UpbitPrice = data.Data().(Price)
+
+	data, err = cache.Value("bithumb")
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	prices.BithumbPrice = data.Data().(Price)
+
+	data, err = cache.Value("bybit")
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	prices.BybitPrice = data.Data().(Price)
+
+	data, err = cache.Value("usdkrw")
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	prices.UsdKRW = data.Data().(Price)
+
+	res, err := json.Marshal(prices)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Write(res)
+}
+
 func main() {
 	cache := _cache()
 	period := map[string]time.Duration{
-		"upbit":  6,
-		"bybit":  5,
-		"usdkrw": 60,
+		"upbit":   5,
+		"bithumb": 6,
+		"bybit":   4,
+		"usdkrw":  600,
 	}
 	go func() {
 		ch := make(chan Price)
 
 		go upbitLastPrice(period["upbit"], ch)
+		go bithumbLastPrice(period["bithumb"], ch)
 		go bybitLastPrice(period["bybit"], ch)
 		go usdPrice(period["usdkrw"], ch)
 
@@ -146,5 +224,7 @@ func main() {
 	router := mux.NewRouter()
 	router.Use(mux.CORSMethodMiddleware(router))
 	router.HandleFunc("/api/lastprice/{name}", lastPrice)
+	router.HandleFunc("/api/prices", allPrices)
+	// Get All
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
