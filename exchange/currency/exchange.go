@@ -3,7 +3,7 @@ package currency
 import (
 	"net/http"
 
-	"github.com/harryoh/crypto-collector/currency/types"
+	"github.com/harryoh/crypto-collector/exchange/currency/types"
 	"github.com/harryoh/crypto-collector/util"
 )
 

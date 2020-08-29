@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/harryoh/crypto-collector/upbit/types"
+	"github.com/harryoh/crypto-collector/exchange/upbit/types"
 	"github.com/harryoh/crypto-collector/util"
 )
 

@@ -1,14 +1,14 @@
-package bithumb
+package bybit
 
 import (
 	"net/http"
 
-	"github.com/harryoh/crypto-collector/bithumb/types"
+	"github.com/harryoh/crypto-collector/exchange/bybit/types"
 	"github.com/harryoh/crypto-collector/util"
 )
 
 const (
-	baseURL = "https://api.bithumb.com"
+	baseURL = "https://api.bybit.com/v2"
 )
 
 // InvalidParams :
@@ -37,10 +37,10 @@ func NewClient() *Client {
 	}
 }
 
-// TransactionHistory :
-func (client *Client) TransactionHistory(
+// Tickers :
+func (client *Client) Tickers(
 	symbol string,
-) (txhistory *types.TransactionHistory, err error) {
+) (tickers *types.Tickers, err error) {
 	if !isValidSymbol(symbol) {
 		err = &InvalidParams{
 			message: "Invalid unit",
@@ -49,20 +49,20 @@ func (client *Client) TransactionHistory(
 	}
 
 	query := map[string]string{
-		"count": "1",
+		"symbol": symbol,
 	}
 
 	options := &util.RequestOptions{
-		URL:   baseURL + "/public/transaction_history/" + symbol,
+		URL:   baseURL + "/public/tickers",
 		Query: query,
 	}
-	err = util.Request(client.httpClient, options, &txhistory)
+	err = util.Request(client.httpClient, options, &tickers)
 	return
 }
 
 // LastPrice :
 func (client *Client) LastPrice(
 	symbol string,
-) (txhistory *types.TransactionHistory, err error) {
-	return client.TransactionHistory(symbol)
+) (tickers *types.Tickers, err error) {
+	return client.Tickers(symbol)
 }

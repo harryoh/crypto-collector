@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/harryoh/crypto-collector/bithumb"
-	"github.com/harryoh/crypto-collector/bybit"
-	"github.com/harryoh/crypto-collector/currency"
-	"github.com/harryoh/crypto-collector/upbit"
+	"github.com/harryoh/crypto-collector/exchange/bithumb"
+	"github.com/harryoh/crypto-collector/exchange/bybit"
+	"github.com/harryoh/crypto-collector/exchange/currency"
+	"github.com/harryoh/crypto-collector/exchange/upbit"
 	"github.com/joho/godotenv"
 	"github.com/muesli/cache2go"
 )
