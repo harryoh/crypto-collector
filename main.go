@@ -44,13 +44,13 @@ func upbitLastPrice(sleep time.Duration, c chan Price) {
 		upbitClient := upbit.NewClient()
 		upbitTicker, err := upbitClient.LastPrice(val.Symbol)
 		if err != nil {
-			time.Sleep(60 * time.Second)
+			time.Sleep(60)
 			continue
 		}
 		val.Price = upbitTicker[0].TradePrice
 		val.Timestamp = upbitTicker[0].Timestamp / 1000
 		c <- *val
-		time.Sleep(sleep * time.Second)
+		time.Sleep(sleep)
 	}
 }
 
@@ -71,7 +71,7 @@ func bithumbLastPrice(sleep time.Duration, c chan Price) {
 		val.Timestamp = time.Now().Unix()
 
 		c <- *val
-		time.Sleep(sleep * time.Second)
+		time.Sleep(sleep)
 	}
 }
 
@@ -93,7 +93,7 @@ func bybitLastPrice(sleep time.Duration, c chan Price) {
 		val.Timestamp = int64(timestamp)
 
 		c <- *val
-		time.Sleep(sleep * time.Second)
+		time.Sleep(sleep)
 	}
 }
 
@@ -111,7 +111,7 @@ func usdPrice(sleep time.Duration, c chan Price) {
 		val.Price = rate.USDKRW[0]
 		val.Timestamp = rate.Update / 1000
 		c <- *val
-		time.Sleep(sleep * time.Second)
+		time.Sleep(sleep)
 	}
 }
 
@@ -196,29 +196,34 @@ func allPrices(c *gin.Context) {
 	c.JSON(http.StatusOK, prices)
 }
 
-func main() {
-	cache := _cache()
-	period := map[string]time.Duration{}
+func setPeriod(period map[string]time.Duration) {
 	err := godotenv.Load()
 	if err != nil {
-		period["upbit"] = 5
-		period["bithumb"] = 6
-		period["bybit"] = 4
-		period["usdkrw"] = 600
+		period["upbit"] = 5 * time.Second
+		period["bithumb"] = 6 * time.Second
+		period["bybit"] = 4 * time.Second
+		period["usdkrw"] = 600 * time.Second
 	} else {
 		upbitPeriod, _ := strconv.Atoi(os.Getenv("UpbitPeriodSeconds"))
-		period["upbit"] = time.Duration(upbitPeriod)
+		period["upbit"] = time.Duration(upbitPeriod) * time.Second
 		bithumbPeriod, _ := strconv.Atoi(os.Getenv("BithumbPeriodSeconds"))
-		period["bithumb"] = time.Duration(bithumbPeriod)
+		period["bithumb"] = time.Duration(bithumbPeriod) * time.Second
 		bybitPeriod, _ := strconv.Atoi(os.Getenv("BybitPeriodSeconds"))
-		period["bybit"] = time.Duration(bybitPeriod)
+		period["bybit"] = time.Duration(bybitPeriod) * time.Second
 		usdkrwPeriod, _ := strconv.Atoi(os.Getenv("UsdKrwPeriodSeconds"))
-		period["usdkrw"] = time.Duration(usdkrwPeriod)
+		period["usdkrw"] = time.Duration(usdkrwPeriod) * time.Second
 	}
+}
 
+func main() {
+	cache := _cache()
+
+	period := make(map[string]time.Duration)
+	setPeriod(period)
 	go func() {
 		ch := make(chan Price)
 
+		// go upbitLastPrice(period["upbit"], ch)
 		go upbitLastPrice(period["upbit"], ch)
 		go bithumbLastPrice(period["bithumb"], ch)
 		go bybitLastPrice(period["bybit"], ch)
