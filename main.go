@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/harryoh/crypto-collector/exchange/bithumb"
 	"github.com/harryoh/crypto-collector/exchange/bybit"
@@ -137,10 +138,10 @@ func _cache() *cache2go.CacheTable {
 // corsMiddleware :
 func corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin")
-		c.Header("Access-Control-Allow-Credentials", "true")
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-control-Allow-Methods", "GET")
+		// c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin")
+		// c.Header("Access-Control-Allow-Credentials", "true")
+		// c.Header("Access-Control-Allow-Origin", "*")
+		// c.Header("Access-control-Allow-Methods", "GET")
 		c.Next()
 	}
 }
@@ -239,6 +240,7 @@ func main() {
 
 	router := gin.Default()
 	router.Use(corsMiddleware())
+	router.Use(static.Serve("/", static.LocalFile("./ui/build", true)))
 	router.GET("/api/prices/:name", lastPrice)
 	router.GET("/api/prices", allPrices)
 	router.Run()
