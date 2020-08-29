@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"github.com/harryoh/crypto-collector/bithumb"
 	"github.com/harryoh/crypto-collector/bybit"
 	"github.com/harryoh/crypto-collector/currency"
@@ -134,73 +134,66 @@ func _cache() *cache2go.CacheTable {
 	return cache2go.Cache("crypto")
 }
 
-func lastPrice(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	cache := _cache()
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
-
-	data, err := cache.Value(vars["name"])
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+// corsMiddleware :
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-control-Allow-Methods", "GET")
+		c.Next()
 	}
-	res, err := json.Marshal(data.Data())
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	w.Write(res)
 }
 
-func allPrices(w http.ResponseWriter, r *http.Request) {
+func lastPrice(c *gin.Context) {
 	cache := _cache()
+	name := c.Param("name")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
+	data, err := cache.Value(name)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
 
+	c.JSON(200, data.Data())
+}
+
+func allPrices(c *gin.Context) {
 	var data *cache2go.CacheItem
 	var err error
+	cache := _cache()
 	prices := &Prices{}
 
 	data, err = cache.Value("upbit")
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 	prices.UpbitPrice = data.Data().(Price)
 
 	data, err = cache.Value("bithumb")
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 	prices.BithumbPrice = data.Data().(Price)
 
 	data, err = cache.Value("bybit")
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 	prices.BybitPrice = data.Data().(Price)
 
 	data, err = cache.Value("usdkrw")
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 	prices.UsdKrw = data.Data().(Price)
-
 	prices.CreatedAt = time.Now().Unix()
 
-	res, err := json.Marshal(prices)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	w.Write(res)
+	c.JSON(http.StatusOK, prices)
 }
 
 func main() {
@@ -239,10 +232,11 @@ func main() {
 		}
 	}()
 
-	router := mux.NewRouter()
-	router.Use(mux.CORSMethodMiddleware(router))
-	router.HandleFunc("/api/lastprice/{name}", lastPrice)
-	router.HandleFunc("/api/prices", allPrices)
-	// Get All
+	router := gin.Default()
+	router.Use(corsMiddleware())
+	router.GET("/api/prices/:name", lastPrice)
+	router.GET("/api/prices", allPrices)
+	router.Run()
+
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
