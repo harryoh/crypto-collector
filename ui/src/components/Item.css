@@ -1,7 +1,7 @@
 .item {
-  padding: 5px;
+  padding: 3px;
   display: flex;
-  align-items: center; /* 세로 가운데 정렬 */
+  align-items: center;
   cursor: pointer;
   transition: all 0.15s;
   user-select: none;
@@ -9,9 +9,4 @@
 
 .item + .item {
   border-top: 1px solid #f1f3f5;
-}
-
-.list-text {
-  flex: 1; /* 체크, 엑스를 제외한 공간 다 채우기 */
-  word-break: break-all;
 }

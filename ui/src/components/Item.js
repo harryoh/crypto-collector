@@ -3,7 +3,7 @@ import './Item.css';
 import TableCell from '@material-ui/core/TableCell';
 import TableRow from '@material-ui/core/TableRow';
 
-class ItemList extends Component {
+class Item extends Component {
   render() {
     const { id, name, price, timestamp } = this.props;
     const numberWithCommas = (x) => {
@@ -25,4 +25,4 @@ class ItemList extends Component {
   }
 }
 
-export default ItemList;
+export default Item;
