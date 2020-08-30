@@ -14,7 +14,7 @@ class Summary extends Component {
     bithumb_premium_curr: 0,
   };
 
-  componentWillReceiveProps() {
+  componentDidUpdate(prevProps, prevState) {
     const { data } = this.props;
     if (data === "undefined" || data === null || Object.keys(data).length === 0) {
       return
@@ -39,7 +39,6 @@ class Summary extends Component {
   }
 
   render() {
-    const { data } = this.props;
     return (
       <TableRow>
         <TableCell component="th" scope="row">
