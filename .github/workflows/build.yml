@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build Server
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,3 +34,5 @@ jobs:
       run: cd ui && npm install
     - name: Build UI
       run: cd ui && npm run build
+    - name: Build the Docker Image
+      run: docker build . --tag crypto-collector:$(date +%s)
