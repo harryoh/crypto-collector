@@ -1,0 +1,10 @@
+version: '2'
+
+services:
+
+  server:
+    image: harryoh/crypto-collector
+    volumes:
+      - .env:/opt/app/.env
+    ports:
+      - 8080:8080
