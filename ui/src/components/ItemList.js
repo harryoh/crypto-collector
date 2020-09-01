@@ -38,9 +38,10 @@ class ItemList extends Component {
           response: res.data,
           data: data
         })
-        setTimeout(getPrices, 1000 * 1);
       } catch (error) {
         console.error(error);
+      } finally {
+        setTimeout(getPrices, 1000 * 1);
       }
     };
     await getPrices();
