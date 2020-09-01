@@ -4,6 +4,10 @@ import TableCell from '@material-ui/core/TableCell';
 import TableRow from '@material-ui/core/TableRow';
 
 class Item extends Component {
+  shouldComponentUpdate(nextProps, nextState) {
+    return this.props.timestamp !== nextProps.timestamp;
+  }
+
   render() {
     const { id, name, price, timestamp } = this.props;
     const numberWithCommas = (x) => {
@@ -12,11 +16,17 @@ class Item extends Component {
     const toDateStr = (timestamp) => {
       const tz_kr = 9*60*60;
       const iso = new Date((Number(timestamp)+tz_kr)*1000).toISOString();
-      return `${iso.slice(0, 10)} ${iso.slice(-13, -5)}`
+      return iso.slice(-13, -5)
+    }
+
+    const timeCheck = (timestamp) => {
+      if (name === "usdkrw") return;
+      const now = Math.floor(+ new Date() / 1000);
+      return (timestamp + 15 <= now) ? "red":"";
     }
 
     return (
-      <TableRow key={id}>
+      <TableRow key={id} className={timeCheck(timestamp)}>
         <TableCell component="th" scope="row"><strong>{name.toUpperCase()}</strong></TableCell>
         <TableCell align="right">{numberWithCommas(price)}</TableCell>
         <TableCell align="right">{toDateStr(timestamp)}</TableCell>

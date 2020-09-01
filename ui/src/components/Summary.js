@@ -26,7 +26,7 @@ class Summary extends Component {
     }
 
     const getPremium = (src, desc, rate) => {
-      return Math.floor(((src-(desc*rate))/src * 100)*1000)/1000;
+      return parseFloat(Math.floor(((src-(desc*rate))/src * 100)*1000)/1000).toFixed(3);
     }
 
     this.setState({
@@ -42,18 +42,17 @@ class Summary extends Component {
     return (
       <TableRow>
         <TableCell component="th" scope="row">
-          <strong>Premium</strong> <br />
-          Fix Rate: 1200
+          <strong>Premium</strong><br />(Fix:1200)
         </TableCell>
         <TableCell align="right">
           <strong>Upbit</strong><br/>
           Fix: {this.state.upbit_premium_fix} %<br/>
-          Curr: {this.state.upbit_premium_curr} %<br/>
+          Cur: {this.state.upbit_premium_curr} %<br/>
         </TableCell>
         <TableCell align="right">
           <strong>Bithumb</strong><br/>
           Fix: {this.state.bithumb_premium_fix} %<br/>
-          Curr: {this.state.bithumb_premium_curr} %<br/>
+          Cur: {this.state.bithumb_premium_curr} %<br/>
         </TableCell>
       </TableRow>
     );

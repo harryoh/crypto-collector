@@ -44,7 +44,7 @@ class ItemList extends Component {
         setTimeout(getPrices, 1000 * 1);
       }
     };
-    await getPrices();
+    getPrices();
   }
 
   render() {
