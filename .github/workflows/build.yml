@@ -38,6 +38,7 @@ jobs:
         password: ${{ secrets.PASSWORD }}
         port: ${{ secrets.PORT }}
         script: |
+          security unlock-keychain -p ${{ secrets.PASSWORD }} && \
           export PATH="$PATH:/usr/local/bin" && \
           cd ~/Work/crypto-collector && \
           docker-compose pull && \
