@@ -22,7 +22,7 @@ jobs:
     - name: Build UI
       run: cd ui && npm run build
     - name: Build the Docker Image
-      run: docker build . --tag crypto-collector
+      run: docker build . --tag crypto-collector:latest
     - name: Build and push Docker images
       uses: docker/build-push-action@v1
       with:
