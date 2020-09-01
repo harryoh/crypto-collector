@@ -37,4 +37,8 @@ jobs:
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         port: ${{ secrets.PORT }}
-        script: cd ~/Work/crypto-collector && docker-compose pull && docker-compose down && docker-compose up -d
+        script: |
+          cd ~/Work/crypto-collector && \
+          /usr/local/bin/docker-compose pull && \
+          /usr/local/bin/docker-compose down && \
+          /usr/local/bin/docker-compose up -d
