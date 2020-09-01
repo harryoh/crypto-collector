@@ -36,6 +36,9 @@ class Summary extends Component {
       bithumb_premium_curr: getPremium(data.BithumbPrice.Price, data.BybitPrice.Price, data.UsdKrw.Price)
     });
     _data = data;
+
+    const title=`upbit:${this.state.upbit_premium_fix}% bithumb:${this.state.bithumb_premium_fix}`;
+    document.title = title;
   }
 
   render() {
