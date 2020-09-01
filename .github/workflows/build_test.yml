@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Build Server
+    name: Testing Build for Server
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go 1.x
@@ -23,7 +23,7 @@ jobs:
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             dep ensure
         fi
-    - name: Build
+    - name: Testing Build for Server
       run: go build -v .
-    - name: Test
+    - name: Testing Unittest for Server
       run: go test -v .
