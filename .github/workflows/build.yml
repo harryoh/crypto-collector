@@ -22,7 +22,7 @@ jobs:
     - name: Build UI
       run: cd ui && npm run build
     - name: Build the Docker Image
-      run: docker build . --tag crypto-collector:latest
+      run: docker build . --tag crypto-collector
     - name: Build and push Docker images
       uses: docker/build-push-action@v1
       with:
@@ -30,6 +30,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         repository: harryoh/crypto-collector
         tag_with_sha: true
+        tags: latest
     - name: Deploy to Server
       uses: appleboy/ssh-action@master
       with:
