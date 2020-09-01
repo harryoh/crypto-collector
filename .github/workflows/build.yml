@@ -30,3 +30,11 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         repository: harryoh/crypto-collector
         tag_with_sha: true
+    - name: Deploy to Server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: ${{ secrets.PORT }}
+        script: cd ~/Work/crypto-collector && docker-compose pull && docker-compose down && docker-compose up -d
