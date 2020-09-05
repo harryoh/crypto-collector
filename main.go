@@ -15,6 +15,7 @@ import (
 	"github.com/harryoh/crypto-collector/exchange/bybit"
 	"github.com/harryoh/crypto-collector/exchange/currency"
 	"github.com/harryoh/crypto-collector/exchange/upbit"
+	"github.com/harryoh/crypto-collector/util"
 	"github.com/joho/godotenv"
 	"github.com/muesli/cache2go"
 )
@@ -35,10 +36,10 @@ type Prices struct {
 
 // TotalPrices :
 type TotalPrices struct {
+	Currency     Prices
+	BybitPrice   Prices
 	UpbitPrice   Prices
 	BithumbPrice Prices
-	BybitPrice   Prices
-	UsdKrw       Prices
 	CreatedAt    int64
 }
 
@@ -59,7 +60,7 @@ func upbitLastPrice(sleep time.Duration, c chan Prices) {
 			}
 
 			price := &Price{
-				Symbol:    market,
+				Symbol:    util.SymbolName(&market),
 				Price:     upbitTicker[0].TradePrice,
 				Timestamp: upbitTicker[0].Timestamp / 1000,
 			}
@@ -93,7 +94,7 @@ func bithumbLastPrice(sleep time.Duration, c chan Prices) {
 			lastPrice, _ := strconv.ParseFloat(bithumbTxHistory.Data[0].Price, 64)
 			kst, _ := time.ParseInLocation("2006-01-02 15:04:05", bithumbTxHistory.Data[0].TransactionDate, loc)
 			price := &Price{
-				Symbol:    market,
+				Symbol:    util.SymbolName(&market),
 				Price:     lastPrice,
 				Timestamp: kst.Unix(),
 			}
@@ -123,11 +124,16 @@ func bybitLastPrice(sleep time.Duration, c chan Prices) {
 		}
 
 		for _, result := range bybitTicker.Result {
+			symbol := util.SymbolName(&result.Symbol)
+			if symbol == "" {
+				continue
+			}
+
 			lastPrice, _ := strconv.ParseFloat(result.LastPrice, 64)
 			timestamp, _ := strconv.ParseFloat(bybitTicker.TimeNow, 64)
 
 			price := &Price{
-				Symbol:    result.Symbol,
+				Symbol:    util.SymbolName(&result.Symbol),
 				Price:     lastPrice,
 				Timestamp: int64(timestamp),
 			}
@@ -237,7 +243,7 @@ func allPrices(c *gin.Context) {
 
 	data, err = cache.Value("currency")
 	if err == nil {
-		totalPrices.UsdKrw = data.Data().(Prices)
+		totalPrices.Currency = data.Data().(Prices)
 	}
 
 	totalPrices.CreatedAt = time.Now().Unix()
