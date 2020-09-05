@@ -33,10 +33,10 @@ func NewClient() *Client {
 	}
 }
 
-// ExchangeRate :
-func (client *Client) ExchangeRate(
+// CurrencyRate :
+func (client *Client) CurrencyRate(
 	currency string,
-) (usdkrw *types.RateUSDKRW, err error) {
+) (rate *types.CurrencyRate, err error) {
 	if !isValidCurrency(currency) {
 		err = &InvalidParams{
 			message: "Invalid currency",
@@ -45,11 +45,6 @@ func (client *Client) ExchangeRate(
 	}
 
 	options := &util.RequestOptions{URL: baseURL + "/query/" + currency}
-	err = util.Request(client.httpClient, options, &usdkrw)
+	err = util.Request(client.httpClient, options, &rate)
 	return
 }
-
-// // LastPrice :
-// func (client *Client) LastPrice() (candles []*types.MinuteCandle, err error) {
-// 	return client.MinuteCandles(1, "KRW-BTC")
-// }

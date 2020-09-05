@@ -17,12 +17,12 @@ type TickerResult struct {
 	Price1HPcnt          string    `json:"price_1h_pcnt"`
 	MarkPrice            string    `json:"mark_price"`
 	IndexPrice           string    `json:"index_price"`
-	OpenInterest         int       `json:"open_interest"`
+	OpenInterest         float64   `json:"open_interest"`
 	OpenValue            string    `json:"open_value"`
 	TotalTurnover        string    `json:"total_turnover"`
 	Turnover24H          string    `json:"turnover_24h"`
-	TotalVolume          int64     `json:"total_volume"`
-	Volume24H            int       `json:"volume_24h"`
+	TotalVolume          float64   `json:"total_volume"`
+	Volume24H            float64   `json:"volume_24h"`
 	FundingRate          string    `json:"funding_rate"`
 	PredictedFundingRate string    `json:"predicted_funding_rate"`
 	NextFundingTime      time.Time `json:"next_funding_time"`
