@@ -4,9 +4,19 @@
   max-width: 640px;
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
   margin: 0 auto;
-  margin-top: 4rem;
+  margin-top: 3px;
 }
 
 .list-wrapper {
   min-height: 5rem;
+}
+
+.clock {
+  min-width: 320px;
+  max-width: 640px;
+  margin: 0 auto;
+  margin-top: 1rem;
+  text-align: right;
+  font-size: 0.8rem;
+  padding-right: 10px;
 }
