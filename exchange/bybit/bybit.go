@@ -41,7 +41,8 @@ func NewClient() *Client {
 func (client *Client) Tickers(
 	symbol string,
 ) (tickers *types.Tickers, err error) {
-	if !isValidSymbol(symbol) {
+
+	if symbol != "" && !isValidSymbol(symbol) {
 		err = &InvalidParams{
 			message: "Invalid unit",
 		}

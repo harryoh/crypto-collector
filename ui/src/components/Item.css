@@ -11,6 +11,6 @@
   border-top: 1px solid #f1f3f5;
 }
 
-.red {
-  background-color: red;
+.warning {
+  background-color: #DC143C;
 }

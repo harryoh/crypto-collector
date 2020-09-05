@@ -58,6 +58,13 @@ func (client *Client) MinuteCandles(
 		return
 	}
 
+	if !isValidSymbol(market) {
+		err = &InvalidParams{
+			message: "Invalid symbol",
+		}
+		return
+	}
+
 	query := map[string]string{
 		"market": market,
 		"count":  "1",

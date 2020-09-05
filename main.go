@@ -21,7 +21,6 @@ import (
 
 // Price :
 type Price struct {
-	Name      string
 	Symbol    string
 	Price     float64
 	Timestamp int64
@@ -29,46 +28,44 @@ type Price struct {
 
 // Prices :
 type Prices struct {
-	UpbitPrice   Price
-	BithumbPrice Price
-	BybitPrice   Price
-	UsdKrw       Price
+	Name      string
+	Price     []Price
+	Timestamp int64
+}
+
+// TotalPrices :
+type TotalPrices struct {
+	UpbitPrice   Prices
+	BithumbPrice Prices
+	BybitPrice   Prices
+	UsdKrw       Prices
 	CreatedAt    int64
 }
 
-func upbitLastPrice(sleep time.Duration, c chan Price) {
-	val := &Price{
-		Name:   "upbit",
-		Symbol: "KRW-BTC",
+func upbitLastPrice(sleep time.Duration, c chan Prices) {
+	val := &Prices{
+		Name: "upbit",
 	}
 	for {
-		upbitClient := upbit.NewClient()
-		upbitTicker, err := upbitClient.LastPrice(val.Symbol)
-		if err != nil {
-			time.Sleep(60)
-			continue
-		}
-		val.Price = upbitTicker[0].TradePrice
-		val.Timestamp = upbitTicker[0].Timestamp / 1000
-		c <- *val
-		time.Sleep(sleep)
-	}
-}
+		val.Price = make([]Price, 0)
+		markets := []string{"KRW-BTC", "KRW-ETH", "KRW-XRP"}
 
-func bithumbLastPrice(sleep time.Duration, c chan Price) {
-	val := &Price{
-		Name:   "bithumb",
-		Symbol: "BTC_KRW",
-	}
-	for {
-		bithumbClient := bithumb.NewClient()
-		bithumbTxHistory, err := bithumbClient.LastPrice(val.Symbol)
-		if err != nil {
-			fmt.Print(err)
-			return
+		upbitClient := upbit.NewClient()
+		for _, market := range markets {
+			upbitTicker, err := upbitClient.LastPrice(market)
+			if err != nil {
+				time.Sleep(sleep)
+				continue
+			}
+
+			price := &Price{
+				Symbol:    market,
+				Price:     upbitTicker[0].TradePrice,
+				Timestamp: upbitTicker[0].Timestamp / 1000,
+			}
+			val.Price = append(val.Price, *price)
 		}
-		price, _ := strconv.ParseFloat(bithumbTxHistory.Data[0].Price, 64)
-		val.Price = price
+
 		val.Timestamp = time.Now().Unix()
 
 		c <- *val
@@ -76,41 +73,99 @@ func bithumbLastPrice(sleep time.Duration, c chan Price) {
 	}
 }
 
-func bybitLastPrice(sleep time.Duration, c chan Price) {
-	val := &Price{
-		Name:   "bybit",
-		Symbol: "BTCUSD",
+func bithumbLastPrice(sleep time.Duration, c chan Prices) {
+	val := &Prices{
+		Name: "bithumb",
 	}
 	for {
-		bybitClient := bybit.NewClient()
-		bybitTicker, err := bybitClient.LastPrice(val.Symbol)
-		if err != nil {
-			fmt.Print(err)
-			return
+		val.Price = make([]Price, 0)
+		markets := []string{"BTC_KRW", "ETH_KRW", "XRP_KRW"}
+
+		loc, _ := time.LoadLocation("Asia/Seoul")
+		bithumbClient := bithumb.NewClient()
+		for _, market := range markets {
+			bithumbTxHistory, err := bithumbClient.LastPrice(market)
+			if err != nil {
+				fmt.Print(err)
+				return
+			}
+
+			lastPrice, _ := strconv.ParseFloat(bithumbTxHistory.Data[0].Price, 64)
+			kst, _ := time.ParseInLocation("2006-01-02 15:04:05", bithumbTxHistory.Data[0].TransactionDate, loc)
+			price := &Price{
+				Symbol:    market,
+				Price:     lastPrice,
+				Timestamp: kst.Unix(),
+			}
+
+			val.Price = append(val.Price, *price)
 		}
-		price, _ := strconv.ParseFloat(bybitTicker.Result[0].LastPrice, 64)
-		timestamp, _ := strconv.ParseFloat(bybitTicker.TimeNow, 64)
-		val.Price = price
-		val.Timestamp = int64(timestamp)
+
+		val.Timestamp = time.Now().Unix()
 
 		c <- *val
 		time.Sleep(sleep)
 	}
 }
 
-func usdPrice(sleep time.Duration, c chan Price) {
-	val := &Price{
-		Name:   "usdkrw",
-		Symbol: "USDKRW",
+func bybitLastPrice(sleep time.Duration, c chan Prices) {
+	val := &Prices{
+		Name: "bybit",
 	}
 	for {
-		currencyClient := currency.NewClient()
-		rate, err := currencyClient.ExchangeRate(val.Symbol)
+		val.Price = make([]Price, 0)
+
+		bybitClient := bybit.NewClient()
+		bybitTicker, err := bybitClient.LastPrice("")
 		if err != nil {
+			fmt.Print(err)
 			return
 		}
-		val.Price = rate.USDKRW[0]
-		val.Timestamp = rate.Update / 1000
+
+		for _, result := range bybitTicker.Result {
+			lastPrice, _ := strconv.ParseFloat(result.LastPrice, 64)
+			timestamp, _ := strconv.ParseFloat(bybitTicker.TimeNow, 64)
+
+			price := &Price{
+				Symbol:    result.Symbol,
+				Price:     lastPrice,
+				Timestamp: int64(timestamp),
+			}
+
+			val.Price = append(val.Price, *price)
+		}
+
+		val.Timestamp = time.Now().Unix()
+
+		c <- *val
+		time.Sleep(sleep)
+	}
+}
+
+func currencyRate(sleep time.Duration, c chan Prices) {
+	val := &Prices{
+		Name: "currency",
+	}
+	for {
+		val.Price = make([]Price, 0)
+		markets := []string{"USDKRW"}
+
+		currencyClient := currency.NewClient()
+		for _, market := range markets {
+			rate, err := currencyClient.CurrencyRate(market)
+			if err != nil {
+				return
+			}
+
+			price := &Price{
+				Symbol:    market,
+				Price:     rate.USDKRW[0],
+				Timestamp: rate.Update / 1000,
+			}
+			val.Price = append(val.Price, *price)
+		}
+
+		val.Timestamp = time.Now().Unix()
 		c <- *val
 		time.Sleep(sleep)
 	}
@@ -163,38 +218,31 @@ func allPrices(c *gin.Context) {
 	var data *cache2go.CacheItem
 	var err error
 	cache := _cache()
-	prices := &Prices{}
+	totalPrices := &TotalPrices{}
 
 	data, err = cache.Value("upbit")
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
+	if err == nil {
+		totalPrices.UpbitPrice = data.Data().(Prices)
 	}
-	prices.UpbitPrice = data.Data().(Price)
 
 	data, err = cache.Value("bithumb")
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
+	if err == nil {
+		totalPrices.BithumbPrice = data.Data().(Prices)
 	}
-	prices.BithumbPrice = data.Data().(Price)
 
 	data, err = cache.Value("bybit")
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
+	if err == nil {
+		totalPrices.BybitPrice = data.Data().(Prices)
 	}
-	prices.BybitPrice = data.Data().(Price)
 
-	data, err = cache.Value("usdkrw")
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
+	data, err = cache.Value("currency")
+	if err == nil {
+		totalPrices.UsdKrw = data.Data().(Prices)
 	}
-	prices.UsdKrw = data.Data().(Price)
-	prices.CreatedAt = time.Now().Unix()
 
-	c.JSON(http.StatusOK, prices)
+	totalPrices.CreatedAt = time.Now().Unix()
+
+	c.JSON(http.StatusOK, totalPrices)
 }
 
 func setPeriod(period map[string]time.Duration) {
@@ -203,7 +251,7 @@ func setPeriod(period map[string]time.Duration) {
 		period["upbit"] = 5 * time.Second
 		period["bithumb"] = 6 * time.Second
 		period["bybit"] = 4 * time.Second
-		period["usdkrw"] = 600 * time.Second
+		period["currency"] = 600 * time.Second
 	} else {
 		upbitPeriod, _ := strconv.Atoi(os.Getenv("UpbitPeriodSeconds"))
 		period["upbit"] = time.Duration(upbitPeriod) * time.Second
@@ -211,8 +259,8 @@ func setPeriod(period map[string]time.Duration) {
 		period["bithumb"] = time.Duration(bithumbPeriod) * time.Second
 		bybitPeriod, _ := strconv.Atoi(os.Getenv("BybitPeriodSeconds"))
 		period["bybit"] = time.Duration(bybitPeriod) * time.Second
-		usdkrwPeriod, _ := strconv.Atoi(os.Getenv("UsdKrwPeriodSeconds"))
-		period["usdkrw"] = time.Duration(usdkrwPeriod) * time.Second
+		currencyPeriod, _ := strconv.Atoi(os.Getenv("CurrencyPeriodSeconds"))
+		period["currency"] = time.Duration(currencyPeriod) * time.Second
 	}
 }
 
@@ -222,13 +270,12 @@ func main() {
 	period := make(map[string]time.Duration)
 	setPeriod(period)
 	go func() {
-		ch := make(chan Price)
+		ch := make(chan Prices)
 
-		// go upbitLastPrice(period["upbit"], ch)
 		go upbitLastPrice(period["upbit"], ch)
 		go bithumbLastPrice(period["bithumb"], ch)
 		go bybitLastPrice(period["bybit"], ch)
-		go usdPrice(period["usdkrw"], ch)
+		go currencyRate(period["currency"], ch)
 
 		for {
 			select {
