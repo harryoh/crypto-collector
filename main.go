@@ -54,7 +54,7 @@ func upbitLastPrice(sleep time.Duration, c chan Prices) {
 		for _, market := range markets {
 			upbitTicker, err := upbitClient.LastPrice(market)
 			if err != nil {
-				time.Sleep(60)
+				time.Sleep(sleep)
 				continue
 			}
 
