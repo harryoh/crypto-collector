@@ -8,9 +8,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-s' -v
 
 #####
 
-FROM scratch
+FROM alpine
 
 WORKDIR /opt/app
+
+RUN apk add --no-cache tzdata
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/src/app/crypto-collector .
