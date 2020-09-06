@@ -52,6 +52,6 @@ func Request(client *http.Client, options *RequestOptions, result interface{}) (
 		return
 	}
 
-	err = json.Unmarshal(Body, result)
+	err = json.Unmarshal(Body, &result)
 	return
 }

@@ -237,24 +237,28 @@ func allPrices(c *gin.Context) {
 
 	data, err = cache.Value("upbit")
 	totalPrices.UpbitPrice.Name = "upbit"
+	totalPrices.UpbitPrice.Price = make([]Price, 0)
 	if err == nil {
 		totalPrices.UpbitPrice = data.Data().(Prices)
 	}
 
 	data, err = cache.Value("bithumb")
 	totalPrices.BithumbPrice.Name = "bithumb"
+	totalPrices.BithumbPrice.Price = make([]Price, 0)
 	if err == nil {
 		totalPrices.BithumbPrice = data.Data().(Prices)
 	}
 
 	data, err = cache.Value("bybit")
 	totalPrices.BybitPrice.Name = "bybit"
+	totalPrices.BybitPrice.Price = make([]Price, 0)
 	if err == nil {
 		totalPrices.BybitPrice = data.Data().(Prices)
 	}
 
 	data, err = cache.Value("currency")
 	totalPrices.Currency.Name = "currency"
+	totalPrices.Currency.Price = make([]Price, 0)
 	if err == nil {
 		totalPrices.Currency = data.Data().(Prices)
 	}
@@ -267,9 +271,9 @@ func allPrices(c *gin.Context) {
 func setPeriod(period map[string]time.Duration) {
 	err := godotenv.Load()
 	if err != nil {
-		period["upbit"] = 5 * time.Second
-		period["bithumb"] = 6 * time.Second
-		period["bybit"] = 4 * time.Second
+		period["upbit"] = 4 * time.Second
+		period["bithumb"] = 5 * time.Second
+		period["bybit"] = 3 * time.Second
 		period["currency"] = 600 * time.Second
 	} else {
 		upbitPeriod, _ := strconv.Atoi(os.Getenv("UpbitPeriodSeconds"))
@@ -299,7 +303,7 @@ func main() {
 		for {
 			select {
 			case msg := <-ch:
-				cache.Add(msg.Name, period[msg.Name]*2, msg)
+				cache.Add(msg.Name, period[msg.Name]*20, msg)
 			}
 		}
 	}()

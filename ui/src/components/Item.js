@@ -40,7 +40,7 @@ class Item extends Component {
 
     const timeCheck = (timestamp) => {
       const now = Math.floor(+ new Date() / 1000);
-      return (timestamp + 20 <= now) ? "warning":"";
+      return (timestamp + 30 <= now) ? "warning":"";
     }
 
     const getPremium = (symbol, src, desc, rate) => {
@@ -75,6 +75,10 @@ class Item extends Component {
           n[p.Symbol]["Timestamp"] = p.Timestamp;
           return n;
         }, {});
+
+        if (Object.keys(bybit).length === 0 && bybit.constructor === Object) {
+          return;
+        }
         items = (
           <TableRow className={timeCheck(this.props.timestamp)}>
             <TableCell align="right"><strong>{name.toUpperCase()}</strong></TableCell>
@@ -92,9 +96,11 @@ class Item extends Component {
           </TableRow>
         );
 
-        for (let p of price) {
-          p["PremiumFix"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, 1200);
-          p["PremiumCur"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, data.Currency.Price[0].Price);
+        if (typeof data.BybitPrice.Price !== 'undefined' && data.BybitPrice.Price.length > 0) {
+          for (let p of price) {
+            p["PremiumFix"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, 1200);
+            p["PremiumCur"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, data.Currency.Price[0].Price);
+          }
         }
 
         items = price.map(
