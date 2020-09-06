@@ -55,6 +55,8 @@ func upbitLastPrice(sleep time.Duration, c chan Prices) {
 		for _, market := range markets {
 			upbitTicker, err := upbitClient.LastPrice(market)
 			if err != nil {
+				fmt.Print("Error: ")
+				fmt.Println(err)
 				time.Sleep(sleep)
 				continue
 			}
@@ -87,8 +89,10 @@ func bithumbLastPrice(sleep time.Duration, c chan Prices) {
 		for _, market := range markets {
 			bithumbTxHistory, err := bithumbClient.LastPrice(market)
 			if err != nil {
-				fmt.Print(err)
-				return
+				fmt.Print("Error: ")
+				fmt.Println(err)
+				time.Sleep(sleep)
+				continue
 			}
 
 			lastPrice, _ := strconv.ParseFloat(bithumbTxHistory.Data[0].Price, 64)
@@ -119,8 +123,10 @@ func bybitLastPrice(sleep time.Duration, c chan Prices) {
 		bybitClient := bybit.NewClient()
 		bybitTicker, err := bybitClient.LastPrice("")
 		if err != nil {
-			fmt.Print(err)
-			return
+			fmt.Print("Error: ")
+			fmt.Println(err)
+			time.Sleep(sleep)
+			continue
 		}
 
 		for _, result := range bybitTicker.Result {
@@ -160,7 +166,10 @@ func currencyRate(sleep time.Duration, c chan Prices) {
 		for _, market := range markets {
 			rate, err := currencyClient.CurrencyRate(market)
 			if err != nil {
-				return
+				fmt.Print("Error: ")
+				fmt.Println(err)
+				time.Sleep(sleep)
+				continue
 			}
 
 			price := &Price{
@@ -286,7 +295,7 @@ func main() {
 		for {
 			select {
 			case msg := <-ch:
-				cache.Add(msg.Name, period[msg.Name]*2*time.Second, msg)
+				cache.Add(msg.Name, period[msg.Name]*2, msg)
 			}
 		}
 	}()

@@ -73,12 +73,12 @@ class Item extends Component {
           return n;
         }, {});
         items = (
-          <TableRow>
+          <TableRow className={timeCheck(this.props.timestamp)}>
             <TableCell align="right"><strong>{name.toUpperCase()}</strong></TableCell>
             <TableCell align="right">BTC: {numberWithCommas(bybit.BTC.Price.toFixed(1))}</TableCell>
             <TableCell align="right">ETH: {numberWithCommas(bybit.ETH.Price.toFixed(1))}</TableCell>
             <TableCell align="right">XRP: {bybit.XRP.Price.toFixed(4)}</TableCell>
-            <TableCell align="right">{toDateStr(bybit.BTC.Timestamp)}</TableCell>
+            <TableCell align="right">{toDateStr(this.props.timestamp)}</TableCell>
           </TableRow>
         )
         break;
