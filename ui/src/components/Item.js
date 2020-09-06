@@ -47,7 +47,7 @@ class Item extends Component {
         n[p.Symbol]["Timestamp"] = p.Timestamp;
         return n;
       }, {});
-      return parseFloat(Math.floor(((src-(bybit[symbol].Price*rate))/src * 100)*1000)/1000).toFixed(3);
+      return parseFloat((src-bybit[symbol].Price*rate)/src * 100).toFixed(3);
     }
 
     let items;
