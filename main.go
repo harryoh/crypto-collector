@@ -236,21 +236,25 @@ func allPrices(c *gin.Context) {
 	totalPrices := &TotalPrices{}
 
 	data, err = cache.Value("upbit")
+	totalPrices.UpbitPrice.Name = "upbit"
 	if err == nil {
 		totalPrices.UpbitPrice = data.Data().(Prices)
 	}
 
 	data, err = cache.Value("bithumb")
+	totalPrices.BithumbPrice.Name = "bithumb"
 	if err == nil {
 		totalPrices.BithumbPrice = data.Data().(Prices)
 	}
 
 	data, err = cache.Value("bybit")
+	totalPrices.BybitPrice.Name = "bybit"
 	if err == nil {
 		totalPrices.BybitPrice = data.Data().(Prices)
 	}
 
 	data, err = cache.Value("currency")
+	totalPrices.Currency.Name = "currency"
 	if err == nil {
 		totalPrices.Currency = data.Data().(Prices)
 	}

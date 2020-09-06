@@ -25,6 +25,9 @@ class Item extends Component {
 
   render() {
     const { id, name, price, data, classes } = this.props;
+    if (price === null) {
+      return
+    }
 
     const numberWithCommas = (x) => {
       return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
