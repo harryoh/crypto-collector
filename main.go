@@ -23,9 +23,10 @@ import (
 
 // Price :
 type Price struct {
-	Symbol    string
-	Price     float64
-	Timestamp int64
+	Symbol      string
+	Price       float64
+	FundingRate float64
+	Timestamp   int64
 }
 
 // Prices :
@@ -154,11 +155,13 @@ func bybitLastPrice(env *envs, c chan Prices) {
 
 			lastPrice, _ := strconv.ParseFloat(result.LastPrice, 64)
 			timestamp, _ := strconv.ParseFloat(bybitTicker.TimeNow, 64)
+			fundingrate, _ := strconv.ParseFloat(result.FundingRate, 64)
 
 			price := &Price{
-				Symbol:    util.SymbolName(&result.Symbol),
-				Price:     lastPrice,
-				Timestamp: int64(timestamp),
+				Symbol:      util.SymbolName(&result.Symbol),
+				Price:       lastPrice,
+				Timestamp:   int64(timestamp),
+				FundingRate: fundingrate,
 			}
 
 			val.Price = append(val.Price, *price)
@@ -226,16 +229,18 @@ func sendMonitorMessage(env *envs) {
 
 		info := ""
 		if cnt%5 == 0 {
-			info = "http://home.5004.pe.kr:8080\n" +
+			info += "http://home.5004.pe.kr:8080\n" +
 				"KRWUSD:" + strconv.FormatFloat(totalPrices.Currency.Price[0].Price, 'f', -1, 64) +
 				" FixKRWUSD: 1200\n\n"
 			cnt = 0
 		}
 
-		info += "BTC: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) + "]\n" +
+		info += "BTC: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) + "]" +
+			" Fund: " + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].FundingRate, 'f', -1, 64) + "\n" +
 			"   Upbit[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price), 'f', 3, 64) + "%]" +
 			" Bithumb[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price), 'f', 3, 64) + "%]\n" +
-			"ETH: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) + "]\n" +
+			"ETH: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) + "]" +
+			" Fund: " + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].FundingRate, 'f', -1, 64) + "\n" +
 			"   Upbit[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price), 'f', 3, 64) + "%]" +
 			" Bithumb[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price), 'f', 3, 64) + "%]"
 
