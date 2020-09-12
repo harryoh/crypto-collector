@@ -6,5 +6,17 @@ services:
     image: harryoh/crypto-collector
     volumes:
       - .env:/opt/app/.env
+    environment:
+      - UpbitPeriodSeconds: ${UpbitPeriodSeconds}
+      - BithumbPeriodSeconds: ${BithumbPeriodSeconds}
+      - BybitPeriodSeconds: ${BybitPeriodSeconds}
+      - UsdKrwPeriodSeconds: ${UsdKrwPeriodSeconds}
+      - AlarmPeriodSeconds: ${AlarmPeriodSeconds}
+      - AlarmPeriodSeconds: ${AlarmPeriodSeconds}
+      - MonitorPeriodSeconds: ${MonitorPeriodSeconds}
+      - AlarmChatID: ${AlarmChatID}
+      - AlarmToken: ${AlarmToken}
+      - MonitorChatID: ${MonitorChatID}
+      - MonitorToken: ${MonitorToken}
     ports:
       - 8080:8080

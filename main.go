@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/harryoh/crypto-collector/exchange/bithumb"
 	"github.com/harryoh/crypto-collector/exchange/bybit"
 	"github.com/harryoh/crypto-collector/exchange/currency"
@@ -43,7 +44,23 @@ type TotalPrices struct {
 	CreatedAt    int64
 }
 
-func upbitLastPrice(sleep time.Duration, c chan Prices) {
+type telegramKey struct {
+	ChatID int64
+	Token  string
+}
+
+type envs struct {
+	Period  map[string]time.Duration
+	Monitor telegramKey
+	Alarm   telegramKey
+}
+
+type sendMessageReqBody struct {
+	ChatID int64  `json:"chat_id"`
+	Text   string `json:"text"`
+}
+
+func upbitLastPrice(env *envs, c chan Prices) {
 	val := &Prices{
 		Name: "upbit",
 	}
@@ -57,7 +74,7 @@ func upbitLastPrice(sleep time.Duration, c chan Prices) {
 			if err != nil {
 				fmt.Print("Error: ")
 				fmt.Println(err)
-				time.Sleep(sleep)
+				time.Sleep(env.Period["upbit"])
 				continue
 			}
 
@@ -72,11 +89,11 @@ func upbitLastPrice(sleep time.Duration, c chan Prices) {
 		val.Timestamp = time.Now().Unix()
 
 		c <- *val
-		time.Sleep(sleep)
+		time.Sleep(env.Period["upbit"])
 	}
 }
 
-func bithumbLastPrice(sleep time.Duration, c chan Prices) {
+func bithumbLastPrice(env *envs, c chan Prices) {
 	val := &Prices{
 		Name: "bithumb",
 	}
@@ -91,7 +108,7 @@ func bithumbLastPrice(sleep time.Duration, c chan Prices) {
 			if err != nil {
 				fmt.Print("Error: ")
 				fmt.Println(err)
-				time.Sleep(sleep)
+				time.Sleep(env.Period["bithumb"])
 				continue
 			}
 
@@ -109,11 +126,11 @@ func bithumbLastPrice(sleep time.Duration, c chan Prices) {
 		val.Timestamp = time.Now().Unix()
 
 		c <- *val
-		time.Sleep(sleep)
+		time.Sleep(env.Period["bithumb"])
 	}
 }
 
-func bybitLastPrice(sleep time.Duration, c chan Prices) {
+func bybitLastPrice(env *envs, c chan Prices) {
 	val := &Prices{
 		Name: "bybit",
 	}
@@ -125,7 +142,7 @@ func bybitLastPrice(sleep time.Duration, c chan Prices) {
 		if err != nil {
 			fmt.Print("Error: ")
 			fmt.Println(err)
-			time.Sleep(sleep)
+			time.Sleep(env.Period["bybit"])
 			continue
 		}
 
@@ -150,11 +167,11 @@ func bybitLastPrice(sleep time.Duration, c chan Prices) {
 		val.Timestamp = time.Now().Unix()
 
 		c <- *val
-		time.Sleep(sleep)
+		time.Sleep(env.Period["bybit"])
 	}
 }
 
-func currencyRate(sleep time.Duration, c chan Prices) {
+func currencyRate(env *envs, c chan Prices) {
 	val := &Prices{
 		Name: "currency",
 	}
@@ -168,7 +185,7 @@ func currencyRate(sleep time.Duration, c chan Prices) {
 			if err != nil {
 				fmt.Print("Error: ")
 				fmt.Println(err)
-				time.Sleep(sleep)
+				time.Sleep(env.Period["currency"])
 				continue
 			}
 
@@ -179,10 +196,50 @@ func currencyRate(sleep time.Duration, c chan Prices) {
 			}
 			val.Price = append(val.Price, *price)
 		}
-
 		val.Timestamp = time.Now().Unix()
 		c <- *val
-		time.Sleep(sleep)
+		time.Sleep(env.Period["currency"])
+	}
+}
+
+func premiumRate(bybit float64, desc float64) float64 {
+	return (desc - bybit*1200) / desc * 100
+}
+
+func sendMonitorMessage(env *envs) {
+	if env.Monitor.Token == "" || env.Monitor.ChatID == 0 {
+		log.Println("Key is invalid for monitor")
+		return
+	}
+
+	monitorBot, err := tgbotapi.NewBotAPI(env.Monitor.Token)
+	if err != nil {
+		panic(err)
+	}
+
+	monitorBot.Debug = false
+
+	cnt := 0
+	for {
+		time.Sleep(env.Period["monitor"])
+		totalPrices := readPrices()
+
+		info := ""
+		if cnt%5 == 0 {
+			info = "http://home.5004.pe.kr:8080\n"
+			cnt = 0
+		}
+
+		info += "BTC: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) + "]\n" +
+			"   Upbit[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price), 'f', 3, 64) + "%]" +
+			" Bithumb[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price), 'f', 3, 64) + "%]\n" +
+			"ETH: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) + "]\n" +
+			"   Upbit[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price), 'f', 3, 64) + "%]" +
+			" Bithumb[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price), 'f', 3, 64) + "%]"
+
+		msg := tgbotapi.NewMessage(env.Monitor.ChatID, info)
+		monitorBot.Send(msg)
+		cnt++
 	}
 }
 
@@ -229,11 +286,11 @@ func lastPrice(c *gin.Context) {
 	c.JSON(200, data.Data())
 }
 
-func allPrices(c *gin.Context) {
+func readPrices() (totalPrices *TotalPrices) {
 	var data *cache2go.CacheItem
 	var err error
 	cache := _cache()
-	totalPrices := &TotalPrices{}
+	totalPrices = &TotalPrices{}
 
 	data, err = cache.Value("upbit")
 	totalPrices.UpbitPrice.Name = "upbit"
@@ -264,46 +321,76 @@ func allPrices(c *gin.Context) {
 	}
 
 	totalPrices.CreatedAt = time.Now().Unix()
+	return
+}
 
+func allPrices(c *gin.Context) {
+	totalPrices := readPrices()
 	c.JSON(http.StatusOK, totalPrices)
 }
 
-func setPeriod(period map[string]time.Duration) {
-	err := godotenv.Load()
-	if err != nil {
-		period["upbit"] = 4 * time.Second
-		period["bithumb"] = 5 * time.Second
-		period["bybit"] = 3 * time.Second
-		period["currency"] = 600 * time.Second
-	} else {
-		upbitPeriod, _ := strconv.Atoi(os.Getenv("UpbitPeriodSeconds"))
-		period["upbit"] = time.Duration(upbitPeriod) * time.Second
-		bithumbPeriod, _ := strconv.Atoi(os.Getenv("BithumbPeriodSeconds"))
-		period["bithumb"] = time.Duration(bithumbPeriod) * time.Second
-		bybitPeriod, _ := strconv.Atoi(os.Getenv("BybitPeriodSeconds"))
-		period["bybit"] = time.Duration(bybitPeriod) * time.Second
-		currencyPeriod, _ := strconv.Atoi(os.Getenv("CurrencyPeriodSeconds"))
-		period["currency"] = time.Duration(currencyPeriod) * time.Second
+func setEnvs(env *envs) {
+	godotenv.Load()
+	// Default Value
+	env.Period["upbit"] = 4 * time.Second
+	env.Period["bithumb"] = 5 * time.Second
+	env.Period["bybit"] = 3 * time.Second
+	env.Period["currency"] = 600 * time.Second
+	env.Period["alarm"] = 10 * time.Second
+	env.Period["monitor"] = 10 * time.Second
+
+	upbitPeriod, _ := strconv.Atoi(os.Getenv("UpbitPeriodSeconds"))
+	if upbitPeriod > 0 {
+		env.Period["upbit"] = time.Duration(upbitPeriod) * time.Second
 	}
+	bithumbPeriod, _ := strconv.Atoi(os.Getenv("BithumbPeriodSeconds"))
+	if bithumbPeriod > 0 {
+		env.Period["bithumb"] = time.Duration(bithumbPeriod) * time.Second
+	}
+	bybitPeriod, _ := strconv.Atoi(os.Getenv("BybitPeriodSeconds"))
+	if bybitPeriod > 0 {
+		env.Period["bybit"] = time.Duration(bybitPeriod) * time.Second
+	}
+	currencyPeriod, _ := strconv.Atoi(os.Getenv("CurrencyPeriodSeconds"))
+	if currencyPeriod > 0 {
+		env.Period["currency"] = time.Duration(currencyPeriod) * time.Second
+	}
+	alarmPeriod, _ := strconv.Atoi(os.Getenv("AlarmPeriodSeconds"))
+	if alarmPeriod > 0 {
+		env.Period["alarm"] = time.Duration(alarmPeriod) * time.Second
+	}
+	monitorPeriod, _ := strconv.Atoi(os.Getenv("MonitorPeriodSeconds"))
+	if monitorPeriod > 0 {
+		env.Period["monitor"] = time.Duration(monitorPeriod) * time.Second
+	}
+
+	env.Monitor.ChatID, _ = strconv.ParseInt(os.Getenv("MonitorChatID"), 10, 64)
+	env.Monitor.Token = os.Getenv("MonitorToken")
+	env.Alarm.ChatID, _ = strconv.ParseInt(os.Getenv("AlarmChatID"), 10, 64)
+	env.Alarm.Token = os.Getenv("AlarmToken")
 }
 
 func main() {
 	cache := _cache()
 
-	period := make(map[string]time.Duration)
-	setPeriod(period)
+	env := &envs{
+		Period: make(map[string]time.Duration),
+	}
+
+	setEnvs(env)
 	go func() {
 		ch := make(chan Prices)
 
-		go upbitLastPrice(period["upbit"], ch)
-		go bithumbLastPrice(period["bithumb"], ch)
-		go bybitLastPrice(period["bybit"], ch)
-		go currencyRate(period["currency"], ch)
+		go upbitLastPrice(env, ch)
+		go bithumbLastPrice(env, ch)
+		go bybitLastPrice(env, ch)
+		go currencyRate(env, ch)
+		go sendMonitorMessage(env)
 
 		for {
 			select {
 			case msg := <-ch:
-				cache.Add(msg.Name, period[msg.Name]*20, msg)
+				cache.Add(msg.Name, env.Period[msg.Name]*20, msg)
 			}
 		}
 	}()
