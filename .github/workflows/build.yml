@@ -33,6 +33,17 @@ jobs:
         tags: latest
     - name: Deploy to Server
       uses: appleboy/ssh-action@master
+      env:
+        UpbitPeriodSeconds: ${{ secrets.UPBIT_PERIOD_SECONDS }}
+        BithumbPeriodSeconds: ${{ secrets.BITHUMB_PERIOD_SECONDS }}
+        BybitPeriodSeconds: ${{ secrets.BYBIT_PERIOD_SECONDS }}
+        UsdKrwPeriodSeconds: ${{ secrets.USDKRW_PERIOD_SECONDS }}
+        AlarmPeriodSeconds: ${{ secrets.ALARM_PERIOD_SECONDS }}
+        MonitorPeriodSeconds: ${{ secrets.MONITOR_PERIOD_SECONDS }}
+        AlarmChatID: ${{ secrets.ALARM_CHATID }}
+        AlarmToken: ${{ secrets.ALARM_TOKEN }}
+        MonitorChatID: ${{ secrets.MONITOR_CHATID }}
+        MonitorToken: ${{ secrets.MONITOR_TOKEN }}
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
