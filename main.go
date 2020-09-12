@@ -226,7 +226,9 @@ func sendMonitorMessage(env *envs) {
 
 		info := ""
 		if cnt%5 == 0 {
-			info = "http://home.5004.pe.kr:8080\n"
+			info = "http://home.5004.pe.kr:8080\n" +
+				"KSWUSD:" + strconv.FormatFloat(totalPrices.Currency.Price[0].Price, 'f', -1, 64) +
+				" FixKSWUSD: 1200\n"
 			cnt = 0
 		}
 
