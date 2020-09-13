@@ -28,7 +28,7 @@ class ItemList extends Component {
 
         this.setState({
           response: res.data,
-          data: data
+          data: data,
         })
       } catch (error) {
         console.error(error);
@@ -40,10 +40,10 @@ class ItemList extends Component {
   }
 
   render() {
-    const { data, response } = this.state;
+    const { data, response, krwusd } = this.state;
 
-    const items = data.map(
-      ({Id, Name, Price, Timestamp}) => (
+    const items = data.filter(k => k.Name !== "currency")
+      .map(({Id, Name, Price, Timestamp}) => (
         <Item
           id={Id}
           key={Id}

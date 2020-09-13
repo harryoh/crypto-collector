@@ -55,6 +55,7 @@ class Item extends Component {
 
     let items;
     let items_name;
+    let cols_name;
     switch (name.toUpperCase()) {
       case "CURRENCY":
         items = price.map(
@@ -73,6 +74,7 @@ class Item extends Component {
           n[p.Symbol] = {}
           n[p.Symbol]["Price"] = p.Price;
           n[p.Symbol]["Timestamp"] = p.Timestamp;
+          n[p.Symbol]["FundingRate"] = p.FundingRate;
           return n;
         }, {});
 
@@ -81,10 +83,20 @@ class Item extends Component {
         }
         items = (
           <TableRow className={timeCheck(this.props.timestamp)}>
-            <TableCell align="right"><strong>{name.toUpperCase()}</strong></TableCell>
-            <TableCell align="right">BTC: {numberWithCommas(bybit.BTC.Price.toFixed(1))}</TableCell>
-            <TableCell align="right">ETH: {numberWithCommas(bybit.ETH.Price.toFixed(1))}</TableCell>
-            <TableCell align="right">XRP: {bybit.XRP.Price.toFixed(4)}</TableCell>
+            <TableCell align="right">
+              <strong>{name.toUpperCase()}</strong> <br />
+              (Fund)
+            </TableCell>
+            <TableCell align="right">
+              BTC:{numberWithCommas(bybit.BTC.Price.toFixed(1))} <br />
+              ({bybit.BTC.FundingRate})
+            </TableCell>
+            <TableCell align="right">
+              ETH: {numberWithCommas(bybit.ETH.Price.toFixed(1))} <br />
+              ({bybit.ETH.FundingRate})</TableCell>
+            <TableCell align="right">
+              XRP: {bybit.XRP.Price.toFixed(4)} <br />
+              ({bybit.XRP.FundingRate})</TableCell>
             <TableCell align="right">{toDateStr(this.props.timestamp)}</TableCell>
           </TableRow>
         )
@@ -93,6 +105,14 @@ class Item extends Component {
         items_name = (
           <TableRow>
             <TableCell align="center" colSpan={5}><strong>{name.toUpperCase()}</strong></TableCell>
+          </TableRow>
+        );
+        cols_name = (
+          <TableRow>
+            <TableCell colSpan={2}></TableCell>
+            <TableCell align="right">Fix: 1200</TableCell>
+            <TableCell align="right">Cur: { data.Currency.Price[0].Price }</TableCell>
+            <TableCell align="center"></TableCell>
           </TableRow>
         );
 
@@ -108,8 +128,8 @@ class Item extends Component {
             <TableRow key={Symbol+'-'+Timestamp} className={timeCheck(Timestamp)}>
               <TableCell component="th" scope="row"><strong>{Symbol}</strong></TableCell>
               <TableCell align="right">{numberWithCommas(Price)}</TableCell>
-              <TableCell align="right">Fix: {PremiumFix}%</TableCell>
-              <TableCell align="right">Cur: {PremiumCur}%</TableCell>
+              <TableCell align="right">{PremiumFix}%</TableCell>
+              <TableCell align="right">{PremiumCur}%</TableCell>
               <TableCell align="right">{toDateStr(Timestamp)}</TableCell>
             </TableRow>
           )
@@ -121,6 +141,7 @@ class Item extends Component {
       <Table key={id} className={classes.table} size="small" aria-label="a dense table">
         <TableBody>
           {items_name}
+          {cols_name}
           {items}
         </TableBody>
       </Table>
