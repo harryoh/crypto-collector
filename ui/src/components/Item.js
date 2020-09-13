@@ -81,6 +81,17 @@ class Item extends Component {
         if (Object.keys(bybit).length === 0 && bybit.constructor === Object) {
           return;
         }
+
+        cols_name = (
+          <TableRow>
+            <TableCell></TableCell>
+            <TableCell align="right">BTC</TableCell>
+            <TableCell align="right">ETH</TableCell>
+            <TableCell align="right">XRP</TableCell>
+            <TableCell></TableCell>
+          </TableRow>
+        );
+
         items = (
           <TableRow className={timeCheck(this.props.timestamp)}>
             <TableCell align="right">
@@ -88,15 +99,17 @@ class Item extends Component {
               (Fund)
             </TableCell>
             <TableCell align="right">
-              BTC:{numberWithCommas(bybit.BTC.Price.toFixed(1))} <br />
+              {numberWithCommas(bybit.BTC.Price.toFixed(1))} <br />
               ({bybit.BTC.FundingRate})
             </TableCell>
             <TableCell align="right">
-              ETH: {numberWithCommas(bybit.ETH.Price.toFixed(1))} <br />
-              ({bybit.ETH.FundingRate})</TableCell>
+              {numberWithCommas(bybit.ETH.Price.toFixed(1))} <br />
+              ({bybit.ETH.FundingRate})
+            </TableCell>
             <TableCell align="right">
-              XRP: {bybit.XRP.Price.toFixed(4)} <br />
-              ({bybit.XRP.FundingRate})</TableCell>
+              {bybit.XRP.Price.toFixed(4)} <br />
+              ({bybit.XRP.FundingRate})
+            </TableCell>
             <TableCell align="right">{toDateStr(this.props.timestamp)}</TableCell>
           </TableRow>
         )
@@ -109,10 +122,10 @@ class Item extends Component {
         );
         cols_name = (
           <TableRow>
-            <TableCell colSpan={2}></TableCell>
-            <TableCell align="right">Fix: 1200</TableCell>
-            <TableCell align="right">Cur: { data.Currency.Price[0].Price }</TableCell>
-            <TableCell align="center"></TableCell>
+            <TableCell align="center" colSpan={2}>KRWUSD</TableCell>
+            <TableCell align="right">Fix:1200</TableCell>
+            <TableCell align="right">Cur:{ data.Currency.Price[0].Price }</TableCell>
+            <TableCell></TableCell>
           </TableRow>
         );
 

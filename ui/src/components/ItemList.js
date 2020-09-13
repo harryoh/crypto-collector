@@ -40,7 +40,7 @@ class ItemList extends Component {
   }
 
   render() {
-    const { data, response, krwusd } = this.state;
+    const { data, response } = this.state;
 
     const items = data.filter(k => k.Name !== "currency")
       .map(({Id, Name, Price, Timestamp}) => (
