@@ -50,10 +50,13 @@ jobs:
           echo BithumbPeriodSeconds=${{ secrets.BITHUMB_PERIOD_SECONDS }} >> .env && \
           echo BybitPeriodSeconds=${{ secrets.BYBIT_PERIOD_SECONDS }} >> .env && \
           echo UsdKrwPeriodSeconds=${{ secrets.USDKRW_PERIOD_SECONDS }} >> .env && \
-          echo AlarmPeriodSeconds=${{ secrets.ALARM_PERIOD_SECONDS }} >> .env && \
-          echo MonitorPeriodSeconds=${{ secrets.MONITOR_PERIOD_SECONDS }} >> .env && \
+          echo MessagePeriodSeconds=${{ secrets.MESSAGE_PERIOD_SECONDS }} >> .env && \
           echo AlarmChatID=${{ secrets.ALARM_CHATID }} >> .env && \
           echo AlarmToken=${{ secrets.ALARM_TOKEN }} >> .env && \
           echo MonitorChatID=${{ secrets.MONITOR_CHATID }} >> .env && \
           echo MonitorToken=${{ secrets.MONITOR_TOKEN }} >> .env && \
+          echo RulePlusMax=${{ secrets.RULE_PLUS_MAX }} >> .env && \
+          echo RulePlusMin=${{ secrets.RULE_PLUS_MIN }} >> .env && \
+          echo RuleMinusMax=${{ secrets.RULE_MINUS_MAX }} >> .env && \
+          echo RuleMinusMin=${{ secrets.RULE_MINUS_MIN }} >> .env && \
           docker-compose up -d

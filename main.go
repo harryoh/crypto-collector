@@ -50,10 +50,17 @@ type telegramKey struct {
 	Token  string
 }
 
+type rule struct {
+	Sign     bool
+	AlarmMax float64
+	AlarmMin float64
+}
+
 type envs struct {
 	Period  map[string]time.Duration
 	Monitor telegramKey
 	Alarm   telegramKey
+	Rules   []rule
 }
 
 type sendMessageReqBody struct {
@@ -215,37 +222,79 @@ func sendMonitorMessage(env *envs) {
 		return
 	}
 
+	if env.Alarm.Token == "" || env.Alarm.ChatID == 0 {
+		log.Println("Key is invalid for alarm")
+		return
+	}
+
 	monitorBot, err := tgbotapi.NewBotAPI(env.Monitor.Token)
 	if err != nil {
 		panic(err)
 	}
 
+	alarmBot, err := tgbotapi.NewBotAPI(env.Alarm.Token)
+	if err != nil {
+		panic(err)
+	}
+
 	monitorBot.Debug = false
+	alarmBot.Debug = false
 
 	cnt := 0
 	for {
 		time.Sleep(env.Period["monitor"])
 		totalPrices := readPrices()
 
-		info := ""
-		if cnt%5 == 0 {
-			info += "http://home.5004.pe.kr:8080\n" +
-				"KRWUSD:" + strconv.FormatFloat(totalPrices.Currency.Price[0].Price, 'f', -1, 64) +
-				" FixKRWUSD: 1200\n\n"
-			cnt = 0
-		}
+		info := "http://home.5004.pe.kr:8080\n" +
+			"KRWUSD:" + strconv.FormatFloat(totalPrices.Currency.Price[0].Price, 'f', -1, 64) +
+			" FixKRWUSD: 1200\n\n"
 
-		info += "BTC: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) + "]" +
+		premiumRateBithumbBTC := premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
+		premiumRateUpbitBTC := premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
+
+		content := "BTC: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) + "]" +
 			" Fund: " + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].FundingRate, 'f', -1, 64) + "\n" +
-			"   Upbit[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price), 'f', 3, 64) + "%]" +
-			" Bithumb[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price), 'f', 3, 64) + "%]\n" +
+			"   Upbit[" + strconv.FormatFloat(premiumRateUpbitBTC, 'f', 3, 64) + "%]" +
+			" Bithumb[" + strconv.FormatFloat(premiumRateBithumbBTC, 'f', 3, 64) + "%]\n" +
 			"ETH: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) + "]" +
 			" Fund: " + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].FundingRate, 'f', -1, 64) + "\n" +
 			"   Upbit[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price), 'f', 3, 64) + "%]" +
 			" Bithumb[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price), 'f', 3, 64) + "%]"
 
-		msg := tgbotapi.NewMessage(env.Monitor.ChatID, info)
-		monitorBot.Send(msg)
+		if cnt%50 == 0 {
+			content = info + content
+		}
+
+		// msg := tgbotapi.NewMessage(env.Monitor.ChatID, content)
+		// monitorBot.Send(msg)
+
+		for _, rule := range env.Rules {
+			ruleText := "RULE [ Max:" + strconv.FormatFloat(rule.AlarmMax, 'f', -1, 64) +
+				" Min:" + strconv.FormatFloat(rule.AlarmMin, 'f', -1, 64) + " ]\n"
+			if rule.Sign == true {
+				if premiumRateBithumbBTC < 0 && premiumRateUpbitBTC < 0 {
+					continue
+				}
+				if premiumRateBithumbBTC <= rule.AlarmMin ||
+					premiumRateBithumbBTC >= rule.AlarmMax ||
+					premiumRateUpbitBTC <= rule.AlarmMin ||
+					premiumRateUpbitBTC >= rule.AlarmMax {
+					msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+					alarmBot.Send(msg)
+				}
+			} else {
+				if premiumRateBithumbBTC > 0 && premiumRateUpbitBTC > 0 {
+					continue
+				}
+				if premiumRateBithumbBTC <= rule.AlarmMin ||
+					premiumRateBithumbBTC >= rule.AlarmMax ||
+					premiumRateUpbitBTC <= rule.AlarmMin ||
+					premiumRateUpbitBTC >= rule.AlarmMax {
+					msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+					alarmBot.Send(msg)
+				}
+			}
+		}
 		cnt++
 	}
 }
@@ -362,19 +411,38 @@ func setEnvs(env *envs) {
 	if currencyPeriod > 0 {
 		env.Period["currency"] = time.Duration(currencyPeriod) * time.Second
 	}
-	alarmPeriod, _ := strconv.Atoi(os.Getenv("AlarmPeriodSeconds"))
-	if alarmPeriod > 0 {
-		env.Period["alarm"] = time.Duration(alarmPeriod) * time.Second
-	}
-	monitorPeriod, _ := strconv.Atoi(os.Getenv("MonitorPeriodSeconds"))
-	if monitorPeriod > 0 {
-		env.Period["monitor"] = time.Duration(monitorPeriod) * time.Second
+
+	messagePeriod, _ := strconv.Atoi(os.Getenv("MessagePeriodSeconds"))
+	if messagePeriod > 0 {
+		env.Period["monitor"] = time.Duration(messagePeriod) * time.Second
 	}
 
 	env.Monitor.ChatID, _ = strconv.ParseInt(os.Getenv("MonitorChatID"), 10, 64)
 	env.Monitor.Token = os.Getenv("MonitorToken")
 	env.Alarm.ChatID, _ = strconv.ParseInt(os.Getenv("AlarmChatID"), 10, 64)
 	env.Alarm.Token = os.Getenv("AlarmToken")
+
+	env.Rules = make([]rule, 0)
+	if os.Getenv("RulePlusMax") != "" && os.Getenv("RulePlusMin") != "" {
+		alarmMax, _ := strconv.ParseFloat(os.Getenv("RulePlusMax"), 64)
+		alarmMin, _ := strconv.ParseFloat(os.Getenv("RulePlusMin"), 64)
+		rule := &rule{
+			Sign:     true,
+			AlarmMax: alarmMax,
+			AlarmMin: alarmMin,
+		}
+		env.Rules = append(env.Rules, *rule)
+	}
+	if os.Getenv("RuleMinusMax") != "" && os.Getenv("RuleMinusMin") != "" {
+		alarmMax, _ := strconv.ParseFloat(os.Getenv("RuleMinusMax"), 64)
+		alarmMin, _ := strconv.ParseFloat(os.Getenv("RuleMinusMin"), 64)
+		rule := &rule{
+			Sign:     false,
+			AlarmMax: alarmMax,
+			AlarmMin: alarmMin,
+		}
+		env.Rules = append(env.Rules, *rule)
+	}
 }
 
 func main() {
