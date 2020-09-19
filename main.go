@@ -283,33 +283,41 @@ func sendMonitorMessage(env *envs) {
 			content = info + content
 		}
 
-		// msg := tgbotapi.NewMessage(env.Monitor.ChatID, content)
-		// monitorBot.Send(msg)
-
 		for _, rule := range env.Rules {
 			ruleText := "RULE [ Max:" + strconv.FormatFloat(rule.AlarmMax, 'f', -1, 64) +
 				" Min:" + strconv.FormatFloat(rule.AlarmMin, 'f', -1, 64) + " ]\n"
+
 			if rule.Sign == true {
-				if premiumRateBithumbBTC < 0 && premiumRateUpbitBTC < 0 {
-					continue
+				if len(totalPrices.BithumbPrice.Price) > 1 && premiumRateBithumbBTC >= 0 {
+					if premiumRateBithumbBTC <= rule.AlarmMin || premiumRateBithumbBTC >= rule.AlarmMax {
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						alarmBot.Send(msg)
+						continue
+					}
 				}
-				if premiumRateBithumbBTC <= rule.AlarmMin ||
-					premiumRateBithumbBTC >= rule.AlarmMax ||
-					premiumRateUpbitBTC <= rule.AlarmMin ||
-					premiumRateUpbitBTC >= rule.AlarmMax {
-					msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
-					alarmBot.Send(msg)
+
+				if len(totalPrices.UpbitPrice.Price) > 1 && premiumRateUpbitBTC >= 0 {
+					if premiumRateUpbitBTC <= rule.AlarmMin || premiumRateUpbitBTC >= rule.AlarmMax {
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						alarmBot.Send(msg)
+						continue
+					}
 				}
 			} else {
-				if premiumRateBithumbBTC > 0 && premiumRateUpbitBTC > 0 {
-					continue
+				if len(totalPrices.BithumbPrice.Price) > 1 && premiumRateBithumbBTC <= 0 {
+					if premiumRateBithumbBTC <= rule.AlarmMin || premiumRateBithumbBTC >= rule.AlarmMax {
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						alarmBot.Send(msg)
+						continue
+					}
 				}
-				if premiumRateBithumbBTC <= rule.AlarmMin ||
-					premiumRateBithumbBTC >= rule.AlarmMax ||
-					premiumRateUpbitBTC <= rule.AlarmMin ||
-					premiumRateUpbitBTC >= rule.AlarmMax {
-					msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
-					alarmBot.Send(msg)
+
+				if len(totalPrices.UpbitPrice.Price) > 1 && premiumRateUpbitBTC <= 0 {
+					if premiumRateUpbitBTC <= rule.AlarmMin || premiumRateUpbitBTC >= rule.AlarmMax {
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						alarmBot.Send(msg)
+						continue
+					}
 				}
 			}
 		}
