@@ -4,6 +4,7 @@ services:
 
   server:
     image: harryoh/crypto-collector
+    restart: always
     volumes:
       - .env:/opt/app/.env
     # environment:
