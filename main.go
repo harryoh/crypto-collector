@@ -80,7 +80,7 @@ func upbitLastPrice(env *envs, c chan Prices) {
 		for _, market := range markets {
 			upbitTicker, err := upbitClient.LastPrice(market)
 			if err != nil {
-				fmt.Print("Error: ")
+				fmt.Print("upbitLastPrice Error: ")
 				fmt.Println(err)
 				time.Sleep(env.Period["upbit"])
 				continue
@@ -114,7 +114,7 @@ func bithumbLastPrice(env *envs, c chan Prices) {
 		for _, market := range markets {
 			bithumbTxHistory, err := bithumbClient.LastPrice(market)
 			if err != nil {
-				fmt.Print("Error: ")
+				fmt.Print("bithumbLastPrice Error: ")
 				fmt.Println(err)
 				time.Sleep(env.Period["bithumb"])
 				continue
@@ -148,7 +148,7 @@ func bybitLastPrice(env *envs, c chan Prices) {
 		bybitClient := bybit.NewClient()
 		bybitTicker, err := bybitClient.LastPrice("")
 		if err != nil {
-			fmt.Print("Error: ")
+			fmt.Print("bybitLastPrice Error: ")
 			fmt.Println(err)
 			time.Sleep(env.Period["bybit"])
 			continue
@@ -193,7 +193,7 @@ func currencyRate(env *envs, c chan Prices) {
 		for _, market := range markets {
 			rate, err := currencyClient.CurrencyRate(market)
 			if err != nil {
-				fmt.Print("Error: ")
+				fmt.Print("currencyRate Error: ")
 				fmt.Println(err)
 				time.Sleep(env.Period["currency"])
 				continue
@@ -245,21 +245,39 @@ func sendMonitorMessage(env *envs) {
 		time.Sleep(env.Period["monitor"])
 		totalPrices := readPrices()
 
+		if len(totalPrices.BybitPrice.Price) < 1 {
+			fmt.Println("Bybit Prices is NULL!")
+			continue
+		}
+
 		info := "http://home.5004.pe.kr:8080\n" +
 			"KRWUSD:" + strconv.FormatFloat(totalPrices.Currency.Price[0].Price, 'f', -1, 64) +
-			" FixKRWUSD: 1200\n\n"
+			" FixKRWUSD: 1200\n"
 
-		premiumRateBithumbBTC := premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
-		premiumRateUpbitBTC := premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
+		content := "[Bybit] " +
+			" BTC:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) +
+			"(" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].FundingRate, 'f', -1, 64) + ")" +
+			" ETH:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) +
+			"(" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].FundingRate, 'f', -1, 64) + ")"
 
-		content := "BTC: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) + "]" +
-			" Fund: " + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].FundingRate, 'f', -1, 64) + "\n" +
-			"   Upbit[" + strconv.FormatFloat(premiumRateUpbitBTC, 'f', 3, 64) + "%]" +
-			" Bithumb[" + strconv.FormatFloat(premiumRateBithumbBTC, 'f', 3, 64) + "%]\n" +
-			"ETH: Bybit[" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) + "]" +
-			" Fund: " + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].FundingRate, 'f', -1, 64) + "\n" +
-			"   Upbit[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price), 'f', 3, 64) + "%]" +
-			" Bithumb[" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price), 'f', 3, 64) + "%]"
+		var premiumRateBithumbBTC float64
+		if len(totalPrices.BithumbPrice.Price) > 1 {
+			premiumRateBithumbBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
+			content += "\n[Bithumb] " +
+				" BTC:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[0].Price, 'f', -1, 64) +
+				"(" + strconv.FormatFloat(premiumRateBithumbBTC, 'f', 3, 64) + "%)" +
+				" ETH:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) +
+				"(" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price), 'f', 3, 64) + "%)"
+		}
+		var premiumRateUpbitBTC float64
+		if len(totalPrices.UpbitPrice.Price) > 1 {
+			premiumRateUpbitBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
+			content += "\n[Upbit] " +
+				" BTC:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[0].Price, 'f', -1, 64) +
+				"(" + strconv.FormatFloat(premiumRateUpbitBTC, 'f', 3, 64) + "%)" +
+				" ETH:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) +
+				"(" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price), 'f', 3, 64) + "%)"
+		}
 
 		if cnt%50 == 0 {
 			content = info + content
