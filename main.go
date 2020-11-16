@@ -187,7 +187,7 @@ func currencyRate(env *envs, c chan Prices) {
 	}
 	for {
 		val.Price = make([]Price, 0)
-		markets := []string{"USDKRW"}
+		markets := []string{"KRW"}
 
 		currencyClient := currency.NewClient()
 		for _, market := range markets {
@@ -201,8 +201,8 @@ func currencyRate(env *envs, c chan Prices) {
 
 			price := &Price{
 				Symbol:    market,
-				Price:     rate.USDKRW[0],
-				Timestamp: rate.Update / 1000,
+				Price:     rate.Rates.USDKRW,
+				Timestamp: time.Now().Unix(),
 			}
 			val.Price = append(val.Price, *price)
 		}

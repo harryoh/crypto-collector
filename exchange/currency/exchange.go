@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	baseURL = "https://earthquake.kr:23490"
+	baseURL = "https://api.exchangeratesapi.io"
 )
 
 // InvalidParams :
@@ -44,7 +44,7 @@ func (client *Client) CurrencyRate(
 		return
 	}
 
-	options := &util.RequestOptions{URL: baseURL + "/query/" + currency}
+	options := &util.RequestOptions{URL: baseURL + "/latest?base=USD&symbols=" + currency}
 	err = util.Request(client.httpClient, options, &rate)
 	return
 }
