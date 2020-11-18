@@ -1,5 +1,5 @@
 package currency
 
 func isValidCurrency(currency string) bool {
-	return currency == "USD_KRW" || currency == "KRW"
+	return currency == "USDKRW" || currency == "KRW"
 }

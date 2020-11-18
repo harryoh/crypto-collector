@@ -57,10 +57,11 @@ type rule struct {
 }
 
 type envs struct {
-	Period  map[string]time.Duration
-	Monitor telegramKey
-	Alarm   telegramKey
-	Rules   []rule
+	Period         map[string]time.Duration
+	Monitor        telegramKey
+	Alarm          telegramKey
+	CurrencyApiKey string
+	Rules          []rule
 }
 
 type sendMessageReqBody struct {
@@ -187,11 +188,11 @@ func currencyRate(env *envs, c chan Prices) {
 	}
 	for {
 		val.Price = make([]Price, 0)
-		markets := []string{"KRW"}
+		markets := []string{"USD_KRW"}
 
 		currencyClient := currency.NewClient()
 		for _, market := range markets {
-			rate, err := currencyClient.CurrencyRate(market)
+			rate, err := currencyClient.CurrencyRate(market, env.CurrencyApiKey)
 			if err != nil {
 				fmt.Print("currencyRate Error: ")
 				fmt.Println(err)
@@ -201,7 +202,7 @@ func currencyRate(env *envs, c chan Prices) {
 
 			price := &Price{
 				Symbol:    market,
-				Price:     rate.Rates.USDKRW,
+				Price:     rate.USDKRW,
 				Timestamp: time.Now().Unix(),
 			}
 			val.Price = append(val.Price, *price)
@@ -417,7 +418,7 @@ func setEnvs(env *envs) {
 	env.Period["upbit"] = 4 * time.Second
 	env.Period["bithumb"] = 5 * time.Second
 	env.Period["bybit"] = 3 * time.Second
-	env.Period["currency"] = 600 * time.Second
+	env.Period["currency"] = 60 * 60 * time.Second
 	env.Period["alarm"] = 10 * time.Second
 	env.Period["monitor"] = 10 * time.Second
 
@@ -447,6 +448,8 @@ func setEnvs(env *envs) {
 	env.Monitor.Token = os.Getenv("MonitorToken")
 	env.Alarm.ChatID, _ = strconv.ParseInt(os.Getenv("AlarmChatID"), 10, 64)
 	env.Alarm.Token = os.Getenv("AlarmToken")
+
+	env.CurrencyApiKey = os.Getenv("CurrencyApiKey")
 
 	env.Rules = make([]rule, 0)
 	if os.Getenv("RulePlusMax") != "" && os.Getenv("RulePlusMin") != "" {
