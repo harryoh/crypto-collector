@@ -59,4 +59,5 @@ jobs:
           echo RulePlusMin=${{ secrets.RULE_PLUS_MIN }} >> .env && \
           echo RuleMinusMax=${{ secrets.RULE_MINUS_MAX }} >> .env && \
           echo RuleMinusMin=${{ secrets.RULE_MINUS_MIN }} >> .env && \
+          echo CurrencyApiKey=${{ secrets.CURRENCY_API_KEY }} >> .env && \
           docker-compose up -d
