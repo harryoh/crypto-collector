@@ -124,7 +124,7 @@ class Item extends Component {
           <TableRow>
             <TableCell align="center" colSpan={2}>KRWUSD</TableCell>
             <TableCell align="right">Fix:1200</TableCell>
-            <TableCell align="right">Cur:1100</TableCell>
+            <TableCell align="right">Cur:1094</TableCell>
             <TableCell></TableCell>
           </TableRow>
         );
@@ -133,7 +133,7 @@ class Item extends Component {
         if (typeof data.BybitPrice.Price !== 'undefined' && data.BybitPrice.Price.length > 0) {
           for (let p of price) {
             p["PremiumFix"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, 1200);
-            p["PremiumCur"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, 1100);
+            p["PremiumCur"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, 1094);
             // p["PremiumCur"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, data.Currency.Price[0].Price);
           }
         }
