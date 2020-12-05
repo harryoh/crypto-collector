@@ -124,8 +124,7 @@ class Item extends Component {
           <TableRow>
             <TableCell align="center" colSpan={2}>KRWUSD</TableCell>
             <TableCell align="right">Fix:1200</TableCell>
-            <TableCell align="right">Cur:{ data.Currency.Price[0].Price }</TableCell>
-            <TableCell align="right">Cur:{ data.Currency.Price[0].Price.toFixed(1) }</TableCell>
+            <TableCell align="right">Cur:{ data.Currency.Price[0].Price.toFixed(2) }</TableCell>
             <TableCell></TableCell>
           </TableRow>
         );
