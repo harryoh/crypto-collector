@@ -17,10 +17,17 @@ class Item extends Component {
   state = {
     premium_fix: 0,
     premium_cur: 0,
+    manual_krwusd: 0,
   };
 
   shouldComponentUpdate(nextProps, nextState) {
     return this.props.timestamp !== nextProps.timestamp;
+  }
+
+  setManualKrwUsd = (e) => {
+    this.setState({
+      manual_krwusd: e.target.value
+    })
   }
 
   render() {
@@ -50,7 +57,15 @@ class Item extends Component {
         n[p.Symbol]["Timestamp"] = p.Timestamp;
         return n;
       }, {});
-      return parseFloat((src-bybit[symbol].Price*rate)/src * 100).toFixed(3);
+
+      return rate && parseFloat((src-bybit[symbol].Price*rate)/src * 100).toFixed(3);
+    }
+
+    const getKRWUSD = () => {
+      if (data.Currency.Price.length) {
+        return data.Currency.Price[0].Price.toFixed(3)
+      }
+      return this.state.manual_krwusd;
     }
 
     let items;
@@ -124,18 +139,16 @@ class Item extends Component {
           <TableRow>
             <TableCell align="center" colSpan={2}>KRWUSD</TableCell>
             <TableCell align="right">Fix:1200</TableCell>
-            <TableCell align="right">Cur:
-              { (data.Currency.Price.length) ? data.Currency.Price[0].Price.toFixed(2):'Error' }
-            </TableCell>
-            <TableCell></TableCell>
+            <TableCell align="right">Cur:{ getKRWUSD() }</TableCell>
+            <TableCell>
+              <input type="text" size="5" onKeyUp={this.setManualKrwUsd}></input>
+              </TableCell>
           </TableRow>
         );
         if (typeof data.BybitPrice.Price !== 'undefined' && data.BybitPrice.Price.length > 0) {
           for (let p of price) {
             p["PremiumFix"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, 1200);
-            if (data.Currency.Price.length) {
-              p["PremiumCur"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, data.Currency.Price[0].Price);
-            }
+            p["PremiumCur"] = getPremium(p.Symbol, p.Price, data.BybitPrice.Price, getKRWUSD());
           }
         }
 
