@@ -141,7 +141,7 @@ class Item extends Component {
             <TableCell align="right">Fix:1200</TableCell>
             <TableCell align="right">Cur:{ getKRWUSD() }</TableCell>
             <TableCell>
-              <input type="text" size="5" onKeyUp={this.setManualKrwUsd}></input>
+              <input type="text" size="8" onKeyUp={this.setManualKrwUsd}></input>
               </TableCell>
           </TableRow>
         );
