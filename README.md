@@ -1,3 +1,3 @@
 # crypto-collector
 
-rebuild 2
+rebuild 3
