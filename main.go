@@ -23,10 +23,11 @@ import (
 
 // Price :
 type Price struct {
-	Symbol      string
-	Price       float64
-	FundingRate float64
-	Timestamp   int64
+	Symbol               string
+	Price                float64
+	FundingRate          float64
+	PredictedFundingRate float64
+	Timestamp            int64
 }
 
 // Prices :
@@ -164,12 +165,14 @@ func bybitLastPrice(env *envs, c chan Prices) {
 			lastPrice, _ := strconv.ParseFloat(result.LastPrice, 64)
 			timestamp, _ := strconv.ParseFloat(bybitTicker.TimeNow, 64)
 			fundingrate, _ := strconv.ParseFloat(result.FundingRate, 64)
+			predictedFundingRate, _ := strconv.ParseFloat(result.PredictedFundingRate, 64)
 
 			price := &Price{
-				Symbol:      util.SymbolName(&result.Symbol),
-				Price:       lastPrice,
-				Timestamp:   int64(timestamp),
-				FundingRate: fundingrate,
+				Symbol:               util.SymbolName(&result.Symbol),
+				Price:                lastPrice,
+				Timestamp:            int64(timestamp),
+				FundingRate:          fundingrate,
+				PredictedFundingRate: predictedFundingRate,
 			}
 
 			val.Price = append(val.Price, *price)

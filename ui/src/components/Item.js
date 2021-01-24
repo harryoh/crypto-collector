@@ -90,6 +90,7 @@ class Item extends Component {
           n[p.Symbol]["Price"] = p.Price;
           n[p.Symbol]["Timestamp"] = p.Timestamp;
           n[p.Symbol]["FundingRate"] = p.FundingRate;
+          n[p.Symbol]["PredictedFundingRate"] = p.PredictedFundingRate;
           return n;
         }, {});
 
@@ -111,19 +112,23 @@ class Item extends Component {
           <TableRow className={timeCheck(this.props.timestamp)}>
             <TableCell align="right">
               <strong>{name.toUpperCase()}</strong> <br />
-              (Fund)
+              (Fund) <br />
+              (Next)
             </TableCell>
             <TableCell align="right">
               {numberWithCommas(bybit.BTC.Price.toFixed(1))} <br />
-              ({bybit.BTC.FundingRate})
+              ({bybit.BTC.FundingRate}) <br />
+              ({bybit.BTC.PredictedFundingRate})
             </TableCell>
             <TableCell align="right">
               {numberWithCommas(bybit.ETH.Price.toFixed(1))} <br />
-              ({bybit.ETH.FundingRate})
+              ({bybit.ETH.FundingRate}) <br />
+              ({bybit.ETH.PredictedFundingRate})
             </TableCell>
             <TableCell align="right">
               {bybit.XRP.Price.toFixed(4)} <br />
-              ({bybit.XRP.FundingRate})
+              ({bybit.XRP.FundingRate}) <br />
+              ({bybit.XRP.PredictedFundingRate})
             </TableCell>
             <TableCell align="right">{toDateStr(this.props.timestamp)}</TableCell>
           </TableRow>
