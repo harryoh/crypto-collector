@@ -292,7 +292,7 @@ func sendMonitorMessage(env *envs) {
 		}
 		env.Rule = data.Data().(rule)
 
-		fmt.Println(env.Rule.Use, env.Rule.AlarmMin, env.Rule.AlarmMax, premiumRateUpbitBTC, premiumRateBithumbETH, premiumRateUpbitBTC, premiumRateUpbitETH)
+		// fmt.Println(env.Rule.Use, env.Rule.AlarmMin, env.Rule.AlarmMax, premiumRateUpbitBTC, premiumRateBithumbETH, premiumRateUpbitBTC, premiumRateUpbitETH)
 		ruleText := "RULE [ Max:" + strconv.FormatFloat(env.Rule.AlarmMax, 'f', -1, 64) +
 			" Min:" + strconv.FormatFloat(env.Rule.AlarmMin, 'f', -1, 64) + " ]\n"
 		if len(totalPrices.BithumbPrice.Price) > 1 {

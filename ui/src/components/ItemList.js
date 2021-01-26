@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Item from './Item';
+import Rule from './Rule';
 import axios from "axios";
 
 import TableContainer from '@material-ui/core/TableContainer';
@@ -25,7 +26,6 @@ class ItemList extends Component {
       try {
         const res = await axios.get(`${baseurl}/api/prices`);
         const data = parse_data(res.data);
-
         this.setState({
           response: res.data,
           data: data,
@@ -41,8 +41,7 @@ class ItemList extends Component {
 
   render() {
     const { data, response } = this.state;
-
-    const items = data.filter(k => k.Name !== "currency")
+    const items = data.filter(k => k.Name && k.Name !== "currency")
       .map(({Id, Name, Price, Timestamp}) => (
         <Item
           id={Id}
@@ -54,9 +53,11 @@ class ItemList extends Component {
         />
       )
     );
-
     return (
         <TableContainer component={Paper}>
+          <Rule
+            data={response['Rule']}
+          />
           {items}
         </TableContainer>
     );
