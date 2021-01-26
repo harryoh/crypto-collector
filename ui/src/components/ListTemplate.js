@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import './ListTemplate.css';
+import RuleForm from './RuleForm';
 
 class ListTemplate extends Component {
   state = {
@@ -26,6 +27,7 @@ class ListTemplate extends Component {
       <div>
         <div className="clock">
           { this.state.now }
+          <RuleForm />
         </div>
         <main className="list-template">
           <section className="list-wrapper">

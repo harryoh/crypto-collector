@@ -407,6 +407,19 @@ func allPrices(c *gin.Context) {
 	c.JSON(http.StatusOK, totalPrices)
 }
 
+func setRule(c *gin.Context) {
+	var json rule
+	if err := c.ShouldBindJSON(&json); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	cache := _cache()
+	cache.Add("rule", 0, json)
+
+	c.JSON(http.StatusOK, gin.H{"status": "OK"})
+}
+
 func setEnvs(env *envs) {
 	godotenv.Load()
 	// Default Value
@@ -482,6 +495,7 @@ func main() {
 	router.Use(static.Serve("/", static.LocalFile("./ui/build", true)))
 	router.GET("/api/prices/:name", lastPrice)
 	router.GET("/api/prices", allPrices)
+	router.POST("/api/rule", setRule)
 	router.Run()
 
 	log.Fatal(http.ListenAndServe(":8080", router))
