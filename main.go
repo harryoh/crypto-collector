@@ -238,9 +238,18 @@ func sendMonitorMessage(env *envs) {
 	cnt := 0
 	for {
 		time.Sleep(env.Period["alarm"])
+
+		var data *cache2go.CacheItem
+		data, err = cache.Value("rule")
+		if err != nil {
+			continue
+		}
+		env.Rule = data.Data().(rule)
+
 		if env.Rule.Use != true {
 			continue
 		}
+
 		totalPrices := readPrices()
 
 		if len(totalPrices.BybitPrice.Price) < 1 {
@@ -284,13 +293,6 @@ func sendMonitorMessage(env *envs) {
 		if cnt%50 == 0 {
 			content = info + content
 		}
-
-		var data *cache2go.CacheItem
-		data, err = cache.Value("rule")
-		if err != nil {
-			continue
-		}
-		env.Rule = data.Data().(rule)
 
 		// fmt.Println(env.Rule.Use, env.Rule.AlarmMin, env.Rule.AlarmMax, premiumRateUpbitBTC, premiumRateBithumbETH, premiumRateUpbitBTC, premiumRateUpbitETH)
 		ruleText := "RULE [ Max:" + strconv.FormatFloat(env.Rule.AlarmMax, 'f', -1, 64) +
