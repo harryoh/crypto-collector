@@ -53,11 +53,8 @@ jobs:
           echo MessagePeriodSeconds=${{ secrets.MESSAGE_PERIOD_SECONDS }} >> .env && \
           echo AlarmChatID=${{ secrets.ALARM_CHATID }} >> .env && \
           echo AlarmToken=${{ secrets.ALARM_TOKEN }} >> .env && \
-          echo MonitorChatID=${{ secrets.MONITOR_CHATID }} >> .env && \
-          echo MonitorToken=${{ secrets.MONITOR_TOKEN }} >> .env && \
-          echo RulePlusMax=${{ secrets.RULE_PLUS_MAX }} >> .env && \
-          echo RulePlusMin=${{ secrets.RULE_PLUS_MIN }} >> .env && \
-          echo RuleMinusMax=${{ secrets.RULE_MINUS_MAX }} >> .env && \
-          echo RuleMinusMin=${{ secrets.RULE_MINUS_MIN }} >> .env && \
-          echo CurrencyApiKey=${{ secrets.CURRENCY_API_KEY }} >> .env && \
+          echo RuleAlarmUse=${{ secrets.RULE_ALARM_USE }} >> .env && \
+          echo RuleAlarmMax=${{ secrets.RULE_ALARM_MAX }} >> .env && \
+          echo RuleAlarmMin=${{ secrets.RULE_ALARM_MIN }} >> .env && \
+          echo CurrencyAPIKey=${{ secrets.CURRENCY_API_KEY }} >> .env && \
           docker-compose up -d

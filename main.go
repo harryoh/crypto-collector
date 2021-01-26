@@ -43,6 +43,7 @@ type TotalPrices struct {
 	BybitPrice   Prices
 	UpbitPrice   Prices
 	BithumbPrice Prices
+	Rule         rule
 	CreatedAt    int64
 }
 
@@ -52,7 +53,7 @@ type telegramKey struct {
 }
 
 type rule struct {
-	Sign     bool
+	Use      bool
 	AlarmMax float64
 	AlarmMin float64
 }
@@ -61,8 +62,8 @@ type envs struct {
 	Period         map[string]time.Duration
 	Monitor        telegramKey
 	Alarm          telegramKey
-	CurrencyApiKey string
-	Rules          []rule
+	CurrencyAPIKey string
+	Rule           rule
 }
 
 type sendMessageReqBody struct {
@@ -195,7 +196,7 @@ func currencyRate(env *envs, c chan Prices) {
 
 		currencyClient := currency.NewClient()
 		for _, market := range markets {
-			rate, err := currencyClient.CurrencyRate(market, env.CurrencyApiKey)
+			rate, err := currencyClient.CurrencyRate(market, env.CurrencyAPIKey)
 			if err != nil {
 				fmt.Print("currencyRate Error: ")
 				fmt.Println(err)
@@ -221,19 +222,9 @@ func premiumRate(bybit float64, desc float64) float64 {
 }
 
 func sendMonitorMessage(env *envs) {
-	if env.Monitor.Token == "" || env.Monitor.ChatID == 0 {
-		log.Println("Key is invalid for monitor")
-		return
-	}
-
 	if env.Alarm.Token == "" || env.Alarm.ChatID == 0 {
 		log.Println("Key is invalid for alarm")
 		return
-	}
-
-	monitorBot, err := tgbotapi.NewBotAPI(env.Monitor.Token)
-	if err != nil {
-		panic(err)
 	}
 
 	alarmBot, err := tgbotapi.NewBotAPI(env.Alarm.Token)
@@ -241,12 +232,15 @@ func sendMonitorMessage(env *envs) {
 		panic(err)
 	}
 
-	monitorBot.Debug = false
+	cache := _cache()
 	alarmBot.Debug = false
 
 	cnt := 0
 	for {
-		time.Sleep(env.Period["monitor"])
+		time.Sleep(env.Period["alarm"])
+		if env.Rule.Use != true {
+			continue
+		}
 		totalPrices := readPrices()
 
 		if len(totalPrices.BybitPrice.Price) < 1 {
@@ -265,8 +259,10 @@ func sendMonitorMessage(env *envs) {
 			"(" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].FundingRate, 'f', -1, 64) + ")"
 
 		var premiumRateBithumbBTC float64
+		var premiumRateBithumbETH float64
 		if len(totalPrices.BithumbPrice.Price) > 1 {
 			premiumRateBithumbBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
+			premiumRateBithumbETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price)
 			content += "\n[Bithumb] " +
 				" BTC:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[0].Price, 'f', -1, 64) +
 				"(" + strconv.FormatFloat(premiumRateBithumbBTC, 'f', 3, 64) + "%)" +
@@ -274,8 +270,10 @@ func sendMonitorMessage(env *envs) {
 				"(" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price), 'f', 3, 64) + "%)"
 		}
 		var premiumRateUpbitBTC float64
+		var premiumRateUpbitETH float64
 		if len(totalPrices.UpbitPrice.Price) > 1 {
 			premiumRateUpbitBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
+			premiumRateUpbitETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price)
 			content += "\n[Upbit] " +
 				" BTC:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[0].Price, 'f', -1, 64) +
 				"(" + strconv.FormatFloat(premiumRateUpbitBTC, 'f', 3, 64) + "%)" +
@@ -287,42 +285,31 @@ func sendMonitorMessage(env *envs) {
 			content = info + content
 		}
 
-		for _, rule := range env.Rules {
-			ruleText := "RULE [ Max:" + strconv.FormatFloat(rule.AlarmMax, 'f', -1, 64) +
-				" Min:" + strconv.FormatFloat(rule.AlarmMin, 'f', -1, 64) + " ]\n"
+		var data *cache2go.CacheItem
+		data, err = cache.Value("rule")
+		if err != nil {
+			continue
+		}
+		env.Rule = data.Data().(rule)
 
-			if rule.Sign == true {
-				if len(totalPrices.BithumbPrice.Price) > 1 && premiumRateBithumbBTC >= 0 {
-					if premiumRateBithumbBTC <= rule.AlarmMin || premiumRateBithumbBTC >= rule.AlarmMax {
-						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
-						alarmBot.Send(msg)
-						continue
-					}
-				}
+		fmt.Println(env.Rule.Use, env.Rule.AlarmMin, env.Rule.AlarmMax, premiumRateUpbitBTC, premiumRateBithumbETH, premiumRateUpbitBTC, premiumRateUpbitETH)
+		ruleText := "RULE [ Max:" + strconv.FormatFloat(env.Rule.AlarmMax, 'f', -1, 64) +
+			" Min:" + strconv.FormatFloat(env.Rule.AlarmMin, 'f', -1, 64) + " ]\n"
+		if len(totalPrices.BithumbPrice.Price) > 1 {
+			if premiumRateBithumbBTC <= env.Rule.AlarmMin || premiumRateBithumbBTC >= env.Rule.AlarmMax ||
+				premiumRateBithumbETH <= env.Rule.AlarmMin || premiumRateBithumbETH >= env.Rule.AlarmMax {
+				msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+				alarmBot.Send(msg)
+				continue
+			}
+		}
 
-				if len(totalPrices.UpbitPrice.Price) > 1 && premiumRateUpbitBTC >= 0 {
-					if premiumRateUpbitBTC <= rule.AlarmMin || premiumRateUpbitBTC >= rule.AlarmMax {
-						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
-						alarmBot.Send(msg)
-						continue
-					}
-				}
-			} else {
-				if len(totalPrices.BithumbPrice.Price) > 1 && premiumRateBithumbBTC <= 0 {
-					if premiumRateBithumbBTC <= rule.AlarmMin || premiumRateBithumbBTC >= rule.AlarmMax {
-						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
-						alarmBot.Send(msg)
-						continue
-					}
-				}
-
-				if len(totalPrices.UpbitPrice.Price) > 1 && premiumRateUpbitBTC <= 0 {
-					if premiumRateUpbitBTC <= rule.AlarmMin || premiumRateUpbitBTC >= rule.AlarmMax {
-						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
-						alarmBot.Send(msg)
-						continue
-					}
-				}
+		if len(totalPrices.UpbitPrice.Price) > 1 {
+			if premiumRateUpbitBTC <= env.Rule.AlarmMin || premiumRateUpbitBTC >= env.Rule.AlarmMax ||
+				premiumRateUpbitETH <= env.Rule.AlarmMin || premiumRateUpbitETH >= env.Rule.AlarmMax {
+				msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+				alarmBot.Send(msg)
+				continue
 			}
 		}
 		cnt++
@@ -406,6 +393,11 @@ func readPrices() (totalPrices *TotalPrices) {
 		totalPrices.Currency = data.Data().(Prices)
 	}
 
+	data, err = cache.Value("rule")
+	if err == nil {
+		totalPrices.Rule = data.Data().(rule)
+	}
+
 	totalPrices.CreatedAt = time.Now().Unix()
 	return
 }
@@ -423,7 +415,6 @@ func setEnvs(env *envs) {
 	env.Period["bybit"] = 3 * time.Second
 	env.Period["currency"] = 60 * 60 * time.Second
 	env.Period["alarm"] = 10 * time.Second
-	env.Period["monitor"] = 10 * time.Second
 
 	upbitPeriod, _ := strconv.Atoi(os.Getenv("UpbitPeriodSeconds"))
 	if upbitPeriod > 0 {
@@ -444,37 +435,20 @@ func setEnvs(env *envs) {
 
 	messagePeriod, _ := strconv.Atoi(os.Getenv("MessagePeriodSeconds"))
 	if messagePeriod > 0 {
-		env.Period["monitor"] = time.Duration(messagePeriod) * time.Second
+		env.Period["alarm"] = time.Duration(messagePeriod) * time.Second
 	}
 
-	env.Monitor.ChatID, _ = strconv.ParseInt(os.Getenv("MonitorChatID"), 10, 64)
-	env.Monitor.Token = os.Getenv("MonitorToken")
 	env.Alarm.ChatID, _ = strconv.ParseInt(os.Getenv("AlarmChatID"), 10, 64)
 	env.Alarm.Token = os.Getenv("AlarmToken")
 
-	env.CurrencyApiKey = os.Getenv("CurrencyApiKey")
+	env.CurrencyAPIKey = os.Getenv("CurrencyAPIKey")
 
-	env.Rules = make([]rule, 0)
-	if os.Getenv("RulePlusMax") != "" && os.Getenv("RulePlusMin") != "" {
-		alarmMax, _ := strconv.ParseFloat(os.Getenv("RulePlusMax"), 64)
-		alarmMin, _ := strconv.ParseFloat(os.Getenv("RulePlusMin"), 64)
-		rule := &rule{
-			Sign:     true,
-			AlarmMax: alarmMax,
-			AlarmMin: alarmMin,
-		}
-		env.Rules = append(env.Rules, *rule)
-	}
-	if os.Getenv("RuleMinusMax") != "" && os.Getenv("RuleMinusMin") != "" {
-		alarmMax, _ := strconv.ParseFloat(os.Getenv("RuleMinusMax"), 64)
-		alarmMin, _ := strconv.ParseFloat(os.Getenv("RuleMinusMin"), 64)
-		rule := &rule{
-			Sign:     false,
-			AlarmMax: alarmMax,
-			AlarmMin: alarmMin,
-		}
-		env.Rules = append(env.Rules, *rule)
-	}
+	env.Rule.Use, _ = strconv.ParseBool(os.Getenv("RuleAlarmUse"))
+	env.Rule.AlarmMax, _ = strconv.ParseFloat(os.Getenv("RuleAlarmMax"), 64)
+	env.Rule.AlarmMin, _ = strconv.ParseFloat(os.Getenv("RuleAlarmMin"), 64)
+
+	cache := _cache()
+	cache.Add("rule", 0, env.Rule)
 }
 
 func main() {
@@ -485,6 +459,7 @@ func main() {
 	}
 
 	setEnvs(env)
+
 	go func() {
 		ch := make(chan Prices)
 
