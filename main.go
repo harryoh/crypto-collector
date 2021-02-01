@@ -275,7 +275,7 @@ func sendMonitorMessage(env *envs) {
 			content += "\n[Bithumb] " +
 				" BTC:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[0].Price, 'f', -1, 64) +
 				"(" + strconv.FormatFloat(premiumRateBithumbBTC, 'f', 3, 64) + "%)" +
-				" ETH:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) +
+				" ETH:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[1].Price, 'f', -1, 64) +
 				"(" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price), 'f', 3, 64) + "%)"
 		}
 		var premiumRateUpbitBTC float64
@@ -286,7 +286,7 @@ func sendMonitorMessage(env *envs) {
 			content += "\n[Upbit] " +
 				" BTC:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[0].Price, 'f', -1, 64) +
 				"(" + strconv.FormatFloat(premiumRateUpbitBTC, 'f', 3, 64) + "%)" +
-				" ETH:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) +
+				" ETH:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[1].Price, 'f', -1, 64) +
 				"(" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price), 'f', 3, 64) + "%)"
 		}
 
