@@ -25,9 +25,10 @@ class ItemList extends Component {
     const getPrices = async () => {
       try {
         const res = await axios.get(`${baseurl}/api/prices`);
-        const data = parse_data(res.data);
+        const response = res.data?.data
+        const data = parse_data(response);
         this.setState({
-          response: res.data,
+          response: response,
           data: data,
         })
       } catch (error) {

@@ -358,7 +358,7 @@ func lastPrice(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, data.Data())
+	c.JSON(200, gin.H{"code": 20000, "data": data.Data()})
 }
 
 func readPrices() (totalPrices *TotalPrices) {
@@ -405,8 +405,8 @@ func readPrices() (totalPrices *TotalPrices) {
 }
 
 func allPrices(c *gin.Context) {
-	totalPrices := readPrices()
-	c.JSON(http.StatusOK, totalPrices)
+	totalPrice := readPrices()
+	c.JSON(http.StatusOK, gin.H{"code": 20000, "data": totalPrice})
 }
 
 func setRule(c *gin.Context) {
