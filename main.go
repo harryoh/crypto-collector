@@ -487,7 +487,7 @@ func main() {
 		go bithumbLastPrice(env, ch)
 		go bybitLastPrice(env, ch)
 		go currencyRate(env, ch)
-		// go sendMonitorMessage(env)
+		go sendMonitorMessage(env)
 
 		for {
 			select {
