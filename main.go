@@ -416,6 +416,7 @@ func allPrices(c *gin.Context) {
 
 func setRule(c *gin.Context) {
 	var json rule
+	fmt.Println(json)
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -424,7 +425,7 @@ func setRule(c *gin.Context) {
 	cache := _cache()
 	cache.Add("rule", 0, json)
 
-	c.JSON(http.StatusOK, gin.H{"status": "OK"})
+	c.JSON(http.StatusOK, gin.H{"code": 20000, "data": "OK"})
 }
 
 func setEnvs(env *envs) {
