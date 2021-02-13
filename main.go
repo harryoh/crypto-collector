@@ -43,7 +43,7 @@ type TotalPrices struct {
 	BybitPrice   Prices
 	UpbitPrice   Prices
 	BithumbPrice Prices
-	Rule         rule
+	Rules        []rule
 	CreatedAt    int64
 }
 
@@ -54,16 +54,23 @@ type telegramKey struct {
 
 type rule struct {
 	Use      bool
+	Symbol   string
+	Exchange string
 	AlarmMax float64
 	AlarmMin float64
 }
+
+// // Rules :
+// type Rules struct {
+// 	rule []rule
+// }
 
 type envs struct {
 	Period         map[string]time.Duration
 	Monitor        telegramKey
 	Alarm          telegramKey
 	CurrencyAPIKey string
-	Rule           rule
+	Rules          []rule
 }
 
 type sendMessageReqBody struct {
@@ -222,6 +229,8 @@ func premiumRate(bybit float64, desc float64) float64 {
 }
 
 func sendMonitorMessage(env *envs) {
+	var sendMsg = true
+
 	if env.Alarm.Token == "" || env.Alarm.ChatID == 0 {
 		log.Println("Key is invalid for alarm")
 		return
@@ -237,18 +246,13 @@ func sendMonitorMessage(env *envs) {
 
 	cnt := 0
 	for {
-		time.Sleep(env.Period["alarm"])
-
 		var data *cache2go.CacheItem
 		data, err = cache.Value("rule")
 		if err != nil {
+			fmt.Println(err)
 			continue
 		}
-		env.Rule = data.Data().(rule)
-
-		if env.Rule.Use != true {
-			continue
-		}
+		env.Rules = data.Data().([]rule)
 
 		totalPrices := readPrices()
 
@@ -257,64 +261,94 @@ func sendMonitorMessage(env *envs) {
 			continue
 		}
 
-		info := "http://home.5004.pe.kr:8080\n" +
-			"KRWUSD:" + strconv.FormatFloat(totalPrices.Currency.Price[0].Price, 'f', -1, 64) +
-			" FixKRWUSD: 1200\n"
-
 		content := "[Bybit] " +
 			" BTC:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) +
 			"(" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].FundingRate, 'f', -1, 64) + ")" +
 			" ETH:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) +
 			"(" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].FundingRate, 'f', -1, 64) + ")"
 
-		var premiumRateBithumbBTC float64
-		var premiumRateBithumbETH float64
-		if len(totalPrices.BithumbPrice.Price) > 1 {
-			premiumRateBithumbBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
-			premiumRateBithumbETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price)
-			content += "\n[Bithumb] " +
-				" BTC:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[0].Price, 'f', -1, 64) +
-				"(" + strconv.FormatFloat(premiumRateBithumbBTC, 'f', 3, 64) + "%)" +
-				" ETH:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[1].Price, 'f', -1, 64) +
-				"(" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price), 'f', 3, 64) + "%)"
-		}
-		var premiumRateUpbitBTC float64
-		var premiumRateUpbitETH float64
-		if len(totalPrices.UpbitPrice.Price) > 1 {
-			premiumRateUpbitBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
-			premiumRateUpbitETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price)
-			content += "\n[Upbit] " +
-				" BTC:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[0].Price, 'f', -1, 64) +
-				"(" + strconv.FormatFloat(premiumRateUpbitBTC, 'f', 3, 64) + "%)" +
-				" ETH:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[1].Price, 'f', -1, 64) +
-				"(" + strconv.FormatFloat(premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price), 'f', 3, 64) + "%)"
-		}
+		var premiumRateBithumbBTC float64 = 0
+		var premiumRateBithumbETH float64 = 0
+		var premiumRateUpbitBTC float64 = 0
+		var premiumRateUpbitETH float64 = 0
 
-		if cnt%50 == 0 {
-			content = info + content
-		}
-
-		// fmt.Println(env.Rule.Use, env.Rule.AlarmMin, env.Rule.AlarmMax, premiumRateUpbitBTC, premiumRateBithumbETH, premiumRateUpbitBTC, premiumRateUpbitETH)
-		ruleText := "RULE [ Max:" + strconv.FormatFloat(env.Rule.AlarmMax, 'f', -1, 64) +
-			" Min:" + strconv.FormatFloat(env.Rule.AlarmMin, 'f', -1, 64) + " ]\n"
-		if len(totalPrices.BithumbPrice.Price) > 1 {
-			if premiumRateBithumbBTC <= env.Rule.AlarmMin || premiumRateBithumbBTC >= env.Rule.AlarmMax ||
-				premiumRateBithumbETH <= env.Rule.AlarmMin || premiumRateBithumbETH >= env.Rule.AlarmMax {
-				msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
-				alarmBot.Send(msg)
+		for _, r := range env.Rules {
+			if r.Use != true {
 				continue
+			}
+			// fmt.Println(r.Use, r.Symbol, r.Exchange, r.AlarmMin, r.AlarmMax, premiumRateUpbitBTC, premiumRateBithumbETH, premiumRateUpbitBTC, premiumRateUpbitETH)
+			ruleText := "RULE [ Symbol:" + r.Symbol +
+				" Exchange:" + r.Exchange +
+				" Max:" + strconv.FormatFloat(r.AlarmMax, 'f', -1, 64) +
+				" Min:" + strconv.FormatFloat(r.AlarmMin, 'f', -1, 64) + " ]\n"
+
+			if r.Exchange == "bithumb" && len(totalPrices.BithumbPrice.Price) > 1 {
+				if r.Symbol == "BTC" {
+					premiumRateBithumbBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
+					if premiumRateBithumbBTC <= r.AlarmMin || premiumRateBithumbBTC >= r.AlarmMax {
+						content += "\n[Bithumb] " +
+							" BTC:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[0].Price, 'f', -1, 64) +
+							"(" + strconv.FormatFloat(premiumRateBithumbBTC, 'f', 3, 64) + "%)"
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						if sendMsg == true {
+							alarmBot.Send(msg)
+						} else {
+							fmt.Println(ruleText + content)
+						}
+					}
+				}
+
+				if r.Symbol == "ETH" {
+					premiumRateBithumbETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price)
+					if premiumRateBithumbETH <= r.AlarmMin || premiumRateBithumbETH >= r.AlarmMax {
+						content += "\n[Bithumb] " +
+							" ETH:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[1].Price, 'f', -1, 64) +
+							"(" + strconv.FormatFloat(premiumRateBithumbETH, 'f', 3, 64) + "%)"
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						if sendMsg == true {
+							alarmBot.Send(msg)
+						} else {
+							fmt.Println(ruleText + content)
+						}
+					}
+				}
+			}
+
+			if r.Exchange == "upbit" && len(totalPrices.UpbitPrice.Price) > 1 {
+				if r.Symbol == "BTC" {
+					premiumRateUpbitBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
+					if premiumRateUpbitBTC <= r.AlarmMin || premiumRateUpbitBTC >= r.AlarmMax {
+						content += "\n[Upbit] " +
+							" BTC:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[0].Price, 'f', -1, 64) +
+							"(" + strconv.FormatFloat(premiumRateUpbitBTC, 'f', 3, 64) + "%)"
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						if sendMsg == true {
+							alarmBot.Send(msg)
+						} else {
+							fmt.Println(ruleText + content)
+						}
+					}
+				}
+
+				if r.Symbol == "ETH" {
+					premiumRateUpbitETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price)
+					if premiumRateUpbitETH <= r.AlarmMin || premiumRateUpbitETH >= r.AlarmMax {
+						content += "\n[Upbit] " +
+							" ETH:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[1].Price, 'f', -1, 64) +
+							"(" + strconv.FormatFloat(premiumRateUpbitETH, 'f', 3, 64) + "%)"
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						if sendMsg == true {
+							alarmBot.Send(msg)
+						} else {
+							fmt.Println(ruleText + content)
+						}
+					}
+				}
 			}
 		}
 
-		if len(totalPrices.UpbitPrice.Price) > 1 {
-			if premiumRateUpbitBTC <= env.Rule.AlarmMin || premiumRateUpbitBTC >= env.Rule.AlarmMax ||
-				premiumRateUpbitETH <= env.Rule.AlarmMin || premiumRateUpbitETH >= env.Rule.AlarmMax {
-				msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
-				alarmBot.Send(msg)
-				continue
-			}
-		}
 		cnt++
+		time.Sleep(env.Period["alarm"])
 	}
 }
 
@@ -402,7 +436,7 @@ func readPrices() (totalPrices *TotalPrices) {
 
 	data, err = cache.Value("rule")
 	if err == nil {
-		totalPrices.Rule = data.Data().(rule)
+		totalPrices.Rules = data.Data().([]rule)
 	}
 
 	totalPrices.CreatedAt = time.Now().Unix()
@@ -415,8 +449,7 @@ func allPrices(c *gin.Context) {
 }
 
 func setRule(c *gin.Context) {
-	var json rule
-	fmt.Println(json)
+	var json []rule
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -463,13 +496,25 @@ func setEnvs(env *envs) {
 	env.Alarm.Token = os.Getenv("AlarmToken")
 
 	env.CurrencyAPIKey = os.Getenv("CurrencyAPIKey")
-
-	env.Rule.Use, _ = strconv.ParseBool(os.Getenv("RuleAlarmUse"))
-	env.Rule.AlarmMax, _ = strconv.ParseFloat(os.Getenv("RuleAlarmMax"), 64)
-	env.Rule.AlarmMin, _ = strconv.ParseFloat(os.Getenv("RuleAlarmMin"), 64)
-
+	ruleUse, _ := strconv.ParseBool(os.Getenv("RuleAlarmUse"))
+	ruleAlarmMax, _ := strconv.ParseFloat(os.Getenv("RuleAlarmMax"), 64)
+	ruleAlarmMin, _ := strconv.ParseFloat(os.Getenv("RuleAlarmMin"), 64)
+	env.Rules = append(env.Rules, rule{
+		Use:      ruleUse,
+		Symbol:   "ETH",
+		Exchange: "bithumb",
+		AlarmMax: ruleAlarmMax,
+		AlarmMin: ruleAlarmMin,
+	})
+	env.Rules = append(env.Rules, rule{
+		Use:      ruleUse,
+		Symbol:   "ETH",
+		Exchange: "upbit",
+		AlarmMax: ruleAlarmMax,
+		AlarmMin: ruleAlarmMin,
+	})
 	cache := _cache()
-	cache.Add("rule", 0, env.Rule)
+	cache.Add("rule", 0, env.Rules)
 }
 
 func main() {
