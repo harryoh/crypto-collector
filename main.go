@@ -261,11 +261,11 @@ func sendMonitorMessage(env *envs) {
 			continue
 		}
 
-		content := "[Bybit] " +
-			" BTC:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) +
-			"(" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].FundingRate, 'f', -1, 64) + ")" +
-			" ETH:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64) +
-			"(" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].FundingRate, 'f', -1, 64) + ")"
+		bybitBTCStr := "[Bybit] " +
+			" BTC:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) + "\n"
+		bybitETHStr := "[Bybit] " +
+			" BTC:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64) + "\n"
+		content := ""
 
 		var premiumRateBithumbBTC float64 = 0
 		var premiumRateBithumbETH float64 = 0
@@ -277,15 +277,15 @@ func sendMonitorMessage(env *envs) {
 				continue
 			}
 			// fmt.Println(r.Use, r.Symbol, r.Exchange, r.AlarmMin, r.AlarmMax, premiumRateUpbitBTC, premiumRateBithumbETH, premiumRateUpbitBTC, premiumRateUpbitETH)
-			ruleText := "RULE [ Symbol:" + r.Symbol +
-				" Exchange:" + r.Exchange +
-				" Max:" + strconv.FormatFloat(r.AlarmMax, 'f', -1, 64) +
-				" Min:" + strconv.FormatFloat(r.AlarmMin, 'f', -1, 64) + " ]\n"
+			ruleText := "RULE [" + r.Exchange + r.Symbol +
+				strconv.FormatFloat(r.AlarmMin, 'f', -1, 64) + " ~ " +
+				strconv.FormatFloat(r.AlarmMax, 'f', -1, 64) + " ]\n"
 
 			if (r.Exchange == "all" || r.Exchange == "bithumb") && len(totalPrices.BithumbPrice.Price) > 1 {
 				if r.Symbol == "all" || r.Symbol == "BTC" {
 					premiumRateBithumbBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
 					if premiumRateBithumbBTC <= r.AlarmMin || premiumRateBithumbBTC >= r.AlarmMax {
+						content = bybitBTCStr
 						content += "\n[Bithumb] " +
 							" BTC:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[0].Price, 'f', -1, 64) +
 							"(" + strconv.FormatFloat(premiumRateBithumbBTC, 'f', 3, 64) + "%)"
@@ -301,6 +301,7 @@ func sendMonitorMessage(env *envs) {
 				if r.Symbol == "all" || r.Symbol == "ETH" {
 					premiumRateBithumbETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price)
 					if premiumRateBithumbETH <= r.AlarmMin || premiumRateBithumbETH >= r.AlarmMax {
+						content = bybitETHStr
 						content += "\n[Bithumb] " +
 							" ETH:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[1].Price, 'f', -1, 64) +
 							"(" + strconv.FormatFloat(premiumRateBithumbETH, 'f', 3, 64) + "%)"
@@ -318,6 +319,7 @@ func sendMonitorMessage(env *envs) {
 				if r.Symbol == "all" || r.Symbol == "BTC" {
 					premiumRateUpbitBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
 					if premiumRateUpbitBTC <= r.AlarmMin || premiumRateUpbitBTC >= r.AlarmMax {
+						content = bybitBTCStr
 						content += "\n[Upbit] " +
 							" BTC:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[0].Price, 'f', -1, 64) +
 							"(" + strconv.FormatFloat(premiumRateUpbitBTC, 'f', 3, 64) + "%)"
@@ -333,6 +335,7 @@ func sendMonitorMessage(env *envs) {
 				if r.Symbol == "all" || r.Symbol == "ETH" {
 					premiumRateUpbitETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price)
 					if premiumRateUpbitETH <= r.AlarmMin || premiumRateUpbitETH >= r.AlarmMax {
+						content = bybitETHStr
 						content += "\n[Upbit] " +
 							" ETH:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[1].Price, 'f', -1, 64) +
 							"(" + strconv.FormatFloat(premiumRateUpbitETH, 'f', 3, 64) + "%)"
