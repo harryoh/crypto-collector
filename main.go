@@ -282,7 +282,7 @@ func sendMonitorMessage(env *envs) {
 				" Max:" + strconv.FormatFloat(r.AlarmMax, 'f', -1, 64) +
 				" Min:" + strconv.FormatFloat(r.AlarmMin, 'f', -1, 64) + " ]\n"
 
-			if r.Exchange == "bithumb" && len(totalPrices.BithumbPrice.Price) > 1 {
+			if (r.Exchange == "all" || r.Exchange == "bithumb") && len(totalPrices.BithumbPrice.Price) > 1 {
 				if r.Symbol == "BTC" {
 					premiumRateBithumbBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
 					if premiumRateBithumbBTC <= r.AlarmMin || premiumRateBithumbBTC >= r.AlarmMax {
@@ -314,7 +314,7 @@ func sendMonitorMessage(env *envs) {
 				}
 			}
 
-			if r.Exchange == "upbit" && len(totalPrices.UpbitPrice.Price) > 1 {
+			if (r.Exchange == "all" || r.Exchange == "upbit") && len(totalPrices.UpbitPrice.Price) > 1 {
 				if r.Symbol == "BTC" {
 					premiumRateUpbitBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
 					if premiumRateUpbitBTC <= r.AlarmMin || premiumRateUpbitBTC >= r.AlarmMax {
@@ -502,14 +502,14 @@ func setEnvs(env *envs) {
 	env.Rules = append(env.Rules, rule{
 		Use:      ruleUse,
 		Symbol:   "ETH",
-		Exchange: "bithumb",
+		Exchange: "upbit",
 		AlarmMax: ruleAlarmMax,
 		AlarmMin: ruleAlarmMin,
 	})
 	env.Rules = append(env.Rules, rule{
 		Use:      ruleUse,
 		Symbol:   "ETH",
-		Exchange: "upbit",
+		Exchange: "bithumb",
 		AlarmMax: ruleAlarmMax,
 		AlarmMin: ruleAlarmMin,
 	})
