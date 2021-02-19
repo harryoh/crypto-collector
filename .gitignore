@@ -17,3 +17,4 @@
 .vscode
 crypto-collector
 .env
+serviceAccountKey.json

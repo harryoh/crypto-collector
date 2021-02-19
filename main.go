@@ -512,6 +512,7 @@ func setEnvs(env *envs) {
 	env.Alarm.Token = os.Getenv("AlarmToken")
 
 	env.CurrencyAPIKey = os.Getenv("CurrencyAPIKey")
+
 	ruleUse, _ := strconv.ParseBool(os.Getenv("RuleAlarmUse"))
 	ruleAlarmMax, _ := strconv.ParseFloat(os.Getenv("RuleAlarmMax"), 64)
 	ruleAlarmMin, _ := strconv.ParseFloat(os.Getenv("RuleAlarmMin"), 64)
@@ -533,12 +534,34 @@ func setEnvs(env *envs) {
 	cache.Add("rule", 0, env.Rules)
 }
 
+// func initializeAppWithServiceAccount() *firebase.App {
+// 	opt := option.WithCredentialsFile("./serviceAccountKey.json")
+// 	app, err := firebase.NewApp(context.Background(), nil, opt)
+// 	if err != nil {
+// 		log.Fatalf("error initializing app: %v\n", err)
+// 	}
+// 	return app
+// }
+
 func main() {
 	cache := _cache()
 
 	env := &envs{
 		Period: make(map[string]time.Duration),
 	}
+
+	// app := initializeAppWithServiceAccount()
+	// client, err := app.Auth(context.Background())
+	// if err != nil {
+	// 	log.Fatalf("error getting Auth client: %v\n", err)
+	// }
+	// idToken := "eyJhbGciOiJSUzI1NiIsImtpZCI6IjYxMDgzMDRiYWRmNDc1MWIyMWUwNDQwNTQyMDZhNDFkOGZmMWNiYTgiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoi7Jik7ZqM6re8IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hLS9BT2gxNEdoSGkzWG9pSEtQai1aVEM1Z3JEc29qUGJuOEt2dmJaNlZ1UWloTDhnUT1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9jcnlwdG8tbWFuYWdlci1mZjc4YSIsImF1ZCI6ImNyeXB0by1tYW5hZ2VyLWZmNzhhIiwiYXV0aF90aW1lIjoxNjEzNDY3NzA2LCJ1c2VyX2lkIjoiMWc4cWFxNjc5bllxWE9lSmtZSFRLc21nMUw5MiIsInN1YiI6IjFnOHFhcTY3OW5ZcVhPZUprWUhUS3NtZzFMOTIiLCJpYXQiOjE2MTM0Njc3MDYsImV4cCI6MTYxMzQ3MTMwNiwiZW1haWwiOiJoYXJyeUA1MDA0LnBlLmtyIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDk4NDUxMzg0ODA3Nzk1NzgyMDMiXSwiZW1haWwiOlsiaGFycnlANTAwNC5wZS5rciJdfSwic2lnbl9pbl9wcm92aWRlciI6Imdvb2dsZS5jb20ifX0.HZaMqiQTtegp4UPVRhenDrkBc6RfuyLmokQouHi4giVhdjqv6X89aRX7_udCAaoyeEn14-TLdpnposWQEZkht82t4ItAxQkdYdUI7Yn9lj9o9LKmfDes6IkddgvQ2iWbcwIs8bpPEUABs6Rr-fXCv15QJoDe7O6DK79ps8aLeRveROyC8QNszWco6bCFSlWevJUwt0ZSNsRO578asqnvFScyRv9p8D0bPw6blaqMJ9epcRWlcJvLdloTtxLvyrI8X7HdV3qVJroO15TrzuMsV0gKMxjADiuzc_H4bZGQa9MZ5pWbjr0maSshcXMcwYpRsYX1n1P7Oc-0JKQtkvuGaQ"
+	// user, err := client.VerifyIDToken(context.Background(), idToken)
+	// if err != nil {
+	// 	log.Fatalf("error verifying ID token: %v\n", err)
+	// }
+
+	// log.Printf("Verified ID token: %v\n", user.Firebase.Identities["email"])
 
 	setEnvs(env)
 

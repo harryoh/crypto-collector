@@ -1,0 +1,5 @@
+http://home.5004.pe.kr
+
+route /api/* {
+  reverse_proxy server:8080
+}

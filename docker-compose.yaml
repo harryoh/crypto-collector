@@ -1,10 +1,17 @@
-version: '2'
-
+version: '3'
 services:
-
+  proxy:
+    restart: always
+    image: caddy
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    ports:
+      - 80:80
+    depends_on:
+      - server
   server:
     image: harryoh/crypto-collector
-    restart: always
+    restart: unless-stopped
     volumes:
       - .env:/opt/app/.env
     # environment:
@@ -18,5 +25,5 @@ services:
     #   - AlarmToken=${AlarmToken}
     #   - MonitorChatID=${MonitorChatID}
     #   - MonitorToken=${MonitorToken}
-    ports:
-      - 8080:8080
+    # ports:
+    #   - 8080:8080
