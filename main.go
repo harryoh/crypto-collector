@@ -264,7 +264,7 @@ func sendMonitorMessage(env *envs) {
 		bybitBTCStr := "[Bybit]" +
 			" BTC:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64)
 		bybitETHStr := "[Bybit]" +
-			" BTC:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64)
+			" ETH:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64)
 		content := ""
 
 		var premiumRateBithumbBTC float64 = 0
