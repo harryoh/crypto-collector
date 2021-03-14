@@ -250,6 +250,7 @@ func sendMonitorMessage(env *envs) {
 		data, err = cache.Value("rule")
 		if err != nil {
 			fmt.Println(err)
+			time.Sleep(time.Second * 1)
 			continue
 		}
 		env.Rules = data.Data().([]rule)
@@ -258,6 +259,7 @@ func sendMonitorMessage(env *envs) {
 
 		if len(totalPrices.BybitPrice.Price) < 1 {
 			fmt.Println("Bybit Prices is NULL!")
+			time.Sleep(time.Second * 1)
 			continue
 		}
 
@@ -273,6 +275,7 @@ func sendMonitorMessage(env *envs) {
 		var premiumRateUpbitETH float64 = 0
 		for _, r := range env.Rules {
 			if r.Use != true {
+				time.Sleep(time.Second * 1)
 				continue
 			}
 			// fmt.Println(r.Use, r.Symbol, r.Exchange, r.AlarmMin, r.AlarmMax, premiumRateUpbitBTC, premiumRateBithumbETH, premiumRateUpbitBTC, premiumRateUpbitETH)
@@ -281,10 +284,11 @@ func sendMonitorMessage(env *envs) {
 				" Max:" + strconv.FormatFloat(r.AlarmMax, 'f', -1, 64) + "\n"
 
 			if (r.Exchange == "all" || r.Exchange == "bithumb") && len(totalPrices.BithumbPrice.Price) > 1 {
-				if r.Symbol == "all" || r.Symbol == "BTC" {
+				if (r.Symbol == "all" || r.Symbol == "BTC") && r.Symbol == totalPrices.BithumbPrice.Price[0].Symbol {
 					premiumRateBithumbBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
 					if premiumRateBithumbBTC <= r.AlarmMin || premiumRateBithumbBTC >= r.AlarmMax {
 						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
+							time.Sleep(time.Second * 1)
 							continue
 						}
 						content = bybitBTCStr
@@ -301,10 +305,11 @@ func sendMonitorMessage(env *envs) {
 					}
 				}
 
-				if r.Symbol == "all" || r.Symbol == "ETH" {
+				if (r.Symbol == "all" || r.Symbol == "ETH") && r.Symbol == totalPrices.BithumbPrice.Price[1].Symbol {
 					premiumRateBithumbETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price)
 					if premiumRateBithumbETH <= r.AlarmMin || premiumRateBithumbETH >= r.AlarmMax {
 						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
+							time.Sleep(time.Second * 1)
 							continue
 						}
 						content = bybitETHStr
@@ -323,10 +328,11 @@ func sendMonitorMessage(env *envs) {
 			}
 
 			if (r.Exchange == "all" || r.Exchange == "upbit") && len(totalPrices.UpbitPrice.Price) > 1 {
-				if r.Symbol == "all" || r.Symbol == "BTC" {
+				if (r.Symbol == "all" || r.Symbol == "BTC") && r.Symbol == totalPrices.UpbitPrice.Price[0].Symbol {
 					premiumRateUpbitBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
 					if premiumRateUpbitBTC <= r.AlarmMin || premiumRateUpbitBTC >= r.AlarmMax {
 						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
+							time.Sleep(time.Second * 1)
 							continue
 						}
 						content = bybitBTCStr
@@ -343,10 +349,11 @@ func sendMonitorMessage(env *envs) {
 					}
 				}
 
-				if r.Symbol == "all" || r.Symbol == "ETH" {
+				if (r.Symbol == "all" || r.Symbol == "ETH") && r.Symbol == totalPrices.UpbitPrice.Price[1].Symbol {
 					premiumRateUpbitETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price)
 					if premiumRateUpbitETH <= r.AlarmMin || premiumRateUpbitETH >= r.AlarmMax {
 						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
+							time.Sleep(time.Second * 1)
 							continue
 						}
 						content = bybitETHStr
