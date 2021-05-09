@@ -10,6 +10,8 @@ func SymbolName(market *string) string {
 		res = "ETH"
 	case "XRP_KRW", "KRW-XRP", "XRPUSD":
 		res = "XRP"
+	case "EOS_KRW", "KRW-EOS", "EOSUSD":
+		res = "EOS"
 	// case "EOS_KRW", "KRW-EOS", "EOSUSD":
 	// 	res = "EOS"
 	case "USDKRW":

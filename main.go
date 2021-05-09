@@ -84,7 +84,7 @@ func upbitLastPrice(env *envs, c chan Prices) {
 	}
 	for {
 		val.Price = make([]Price, 0)
-		markets := []string{"KRW-BTC", "KRW-ETH", "KRW-XRP"}
+		markets := []string{"KRW-BTC", "KRW-ETH", "KRW-XRP", "KRW-EOS"}
 
 		upbitClient := upbit.NewClient()
 		for _, market := range markets {
@@ -117,7 +117,7 @@ func bithumbLastPrice(env *envs, c chan Prices) {
 	}
 	for {
 		val.Price = make([]Price, 0)
-		markets := []string{"BTC_KRW", "ETH_KRW", "XRP_KRW"}
+		markets := []string{"BTC_KRW", "ETH_KRW", "XRP_KRW", "EOS_KRW"}
 
 		loc, _ := time.LoadLocation("Asia/Seoul")
 		bithumbClient := bithumb.NewClient()

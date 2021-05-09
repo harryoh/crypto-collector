@@ -6,5 +6,6 @@ func isValidMinuteCandleUnit(unit int) bool {
 }
 
 func isValidSymbol(symbol string) bool {
-	return symbol == "KRW-BTC" || symbol == "KRW-ETH" || symbol == "KRW-XRP"
+	return symbol == "KRW-BTC" || symbol == "KRW-ETH" || symbol == "KRW-XRP" ||
+		symbol == "KRW-EOS"
 }
