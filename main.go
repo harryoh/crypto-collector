@@ -267,26 +267,28 @@ func sendMonitorMessage(env *envs) {
 			" BTC:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[0].Price, 'f', -1, 64)
 		bybitETHStr := "[Bybit]" +
 			" ETH:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[1].Price, 'f', -1, 64)
+		bybitEOSStr := "[Bybit]" +
+			" EOS:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[2].Price, 'f', -1, 64)
+		bybitXRPStr := "[Bybit]" +
+			" XRP:" + strconv.FormatFloat(totalPrices.BybitPrice.Price[3].Price, 'f', -1, 64)
 		content := ""
 
-		var premiumRateBithumbBTC float64 = 0
-		var premiumRateBithumbETH float64 = 0
-		var premiumRateUpbitBTC float64 = 0
-		var premiumRateUpbitETH float64 = 0
+		var premiumRateNumber float64 = 0
+
 		for _, r := range env.Rules {
-			if r.Use != true {
+			if !r.Use {
 				time.Sleep(time.Second * 1)
 				continue
 			}
-			// fmt.Println(r.Use, r.Symbol, r.Exchange, r.AlarmMin, r.AlarmMax, premiumRateUpbitBTC, premiumRateBithumbETH, premiumRateUpbitBTC, premiumRateUpbitETH)
-			ruleText := "[RULE]: " + r.Exchange + r.Symbol +
+
+			ruleText := "[RULE]: " + r.Exchange + " " + r.Symbol +
 				" Min:" + strconv.FormatFloat(r.AlarmMin, 'f', -1, 64) +
 				" Max:" + strconv.FormatFloat(r.AlarmMax, 'f', -1, 64) + "\n"
 
 			if (r.Exchange == "all" || r.Exchange == "bithumb") && len(totalPrices.BithumbPrice.Price) > 1 {
-				if (r.Symbol == "all" || r.Symbol == "BTC") && r.Symbol == totalPrices.BithumbPrice.Price[0].Symbol {
-					premiumRateBithumbBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
-					if premiumRateBithumbBTC <= r.AlarmMin || premiumRateBithumbBTC >= r.AlarmMax {
+				if r.Symbol == "all" || (r.Symbol == "BTC" && r.Symbol == totalPrices.BithumbPrice.Price[0].Symbol) {
+					premiumRateNumber = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.BithumbPrice.Price[0].Price)
+					if premiumRateNumber <= r.AlarmMin || premiumRateNumber >= r.AlarmMax {
 						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
 							time.Sleep(time.Second * 1)
 							continue
@@ -294,7 +296,7 @@ func sendMonitorMessage(env *envs) {
 						content = bybitBTCStr
 						content += "\n[Bithumb]" +
 							" BTC:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[0].Price, 'f', -1, 64) +
-							"(" + strconv.FormatFloat(premiumRateBithumbBTC, 'f', 3, 64) + "%)"
+							"(" + strconv.FormatFloat(premiumRateNumber, 'f', 3, 64) + "%)"
 						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
 						lastAlarmTimestamp = time.Now().Unix()
 						if sendMsg == true {
@@ -305,9 +307,9 @@ func sendMonitorMessage(env *envs) {
 					}
 				}
 
-				if (r.Symbol == "all" || r.Symbol == "ETH") && r.Symbol == totalPrices.BithumbPrice.Price[1].Symbol {
-					premiumRateBithumbETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price)
-					if premiumRateBithumbETH <= r.AlarmMin || premiumRateBithumbETH >= r.AlarmMax {
+				if r.Symbol == "all" || (r.Symbol == "ETH" && r.Symbol == totalPrices.BithumbPrice.Price[1].Symbol) {
+					premiumRateNumber = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.BithumbPrice.Price[1].Price)
+					if premiumRateNumber <= r.AlarmMin || premiumRateNumber >= r.AlarmMax {
 						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
 							time.Sleep(time.Second * 1)
 							continue
@@ -315,7 +317,49 @@ func sendMonitorMessage(env *envs) {
 						content = bybitETHStr
 						content += "\n[Bithumb]" +
 							" ETH:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[1].Price, 'f', -1, 64) +
-							"(" + strconv.FormatFloat(premiumRateBithumbETH, 'f', 3, 64) + "%)"
+							"(" + strconv.FormatFloat(premiumRateNumber, 'f', 3, 64) + "%)"
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						lastAlarmTimestamp = time.Now().Unix()
+						if sendMsg == true {
+							alarmBot.Send(msg)
+						} else {
+							fmt.Println(ruleText + content)
+						}
+					}
+				}
+
+				if r.Symbol == "all" || (r.Symbol == "XRP" && r.Symbol == totalPrices.BithumbPrice.Price[2].Symbol) {
+					premiumRateNumber = premiumRate(totalPrices.BybitPrice.Price[3].Price, totalPrices.BithumbPrice.Price[2].Price)
+					if premiumRateNumber <= r.AlarmMin || premiumRateNumber >= r.AlarmMax {
+						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
+							time.Sleep(time.Second * 1)
+							continue
+						}
+						content = bybitXRPStr
+						content += "\n[Bithumb]" +
+							" XRP:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[2].Price, 'f', -1, 64) +
+							"(" + strconv.FormatFloat(premiumRateNumber, 'f', 3, 64) + "%)"
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						lastAlarmTimestamp = time.Now().Unix()
+						if sendMsg == true {
+							alarmBot.Send(msg)
+						} else {
+							fmt.Println(ruleText + content)
+						}
+					}
+				}
+
+				if r.Symbol == "all" || (r.Symbol == "EOS" && r.Symbol == totalPrices.BithumbPrice.Price[3].Symbol) {
+					premiumRateNumber = premiumRate(totalPrices.BybitPrice.Price[2].Price, totalPrices.BithumbPrice.Price[3].Price)
+					if premiumRateNumber <= r.AlarmMin || premiumRateNumber >= r.AlarmMax {
+						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
+							time.Sleep(time.Second * 1)
+							continue
+						}
+						content = bybitEOSStr
+						content += "\n[Bithumb]" +
+							" EOS:" + strconv.FormatFloat(totalPrices.BithumbPrice.Price[3].Price, 'f', -1, 64) +
+							"(" + strconv.FormatFloat(premiumRateNumber, 'f', 3, 64) + "%)"
 						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
 						lastAlarmTimestamp = time.Now().Unix()
 						if sendMsg == true {
@@ -328,9 +372,9 @@ func sendMonitorMessage(env *envs) {
 			}
 
 			if (r.Exchange == "all" || r.Exchange == "upbit") && len(totalPrices.UpbitPrice.Price) > 1 {
-				if (r.Symbol == "all" || r.Symbol == "BTC") && r.Symbol == totalPrices.UpbitPrice.Price[0].Symbol {
-					premiumRateUpbitBTC = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
-					if premiumRateUpbitBTC <= r.AlarmMin || premiumRateUpbitBTC >= r.AlarmMax {
+				if r.Symbol == "all" || (r.Symbol == "BTC" && r.Symbol == totalPrices.UpbitPrice.Price[0].Symbol) {
+					premiumRateNumber = premiumRate(totalPrices.BybitPrice.Price[0].Price, totalPrices.UpbitPrice.Price[0].Price)
+					if premiumRateNumber <= r.AlarmMin || premiumRateNumber >= r.AlarmMax {
 						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
 							time.Sleep(time.Second * 1)
 							continue
@@ -338,7 +382,7 @@ func sendMonitorMessage(env *envs) {
 						content = bybitBTCStr
 						content += "\n[Upbit]" +
 							" BTC:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[0].Price, 'f', -1, 64) +
-							"(" + strconv.FormatFloat(premiumRateUpbitBTC, 'f', 3, 64) + "%)"
+							"(" + strconv.FormatFloat(premiumRateNumber, 'f', 3, 64) + "%)"
 						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
 						lastAlarmTimestamp = time.Now().Unix()
 						if sendMsg == true {
@@ -349,9 +393,9 @@ func sendMonitorMessage(env *envs) {
 					}
 				}
 
-				if (r.Symbol == "all" || r.Symbol == "ETH") && r.Symbol == totalPrices.UpbitPrice.Price[1].Symbol {
-					premiumRateUpbitETH = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price)
-					if premiumRateUpbitETH <= r.AlarmMin || premiumRateUpbitETH >= r.AlarmMax {
+				if r.Symbol == "all" || (r.Symbol == "ETH" && r.Symbol == totalPrices.UpbitPrice.Price[1].Symbol) {
+					premiumRateNumber = premiumRate(totalPrices.BybitPrice.Price[1].Price, totalPrices.UpbitPrice.Price[1].Price)
+					if premiumRateNumber <= r.AlarmMin || premiumRateNumber >= r.AlarmMax {
 						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
 							time.Sleep(time.Second * 1)
 							continue
@@ -359,7 +403,49 @@ func sendMonitorMessage(env *envs) {
 						content = bybitETHStr
 						content += "\n[Upbit]" +
 							" ETH:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[1].Price, 'f', -1, 64) +
-							"(" + strconv.FormatFloat(premiumRateUpbitETH, 'f', 3, 64) + "%)"
+							"(" + strconv.FormatFloat(premiumRateNumber, 'f', 3, 64) + "%)"
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						lastAlarmTimestamp = time.Now().Unix()
+						if sendMsg == true {
+							alarmBot.Send(msg)
+						} else {
+							fmt.Println(ruleText + content)
+						}
+					}
+				}
+
+				if r.Symbol == "all" || (r.Symbol == "XRP" && r.Symbol == totalPrices.UpbitPrice.Price[2].Symbol) {
+					premiumRateNumber = premiumRate(totalPrices.BybitPrice.Price[3].Price, totalPrices.UpbitPrice.Price[2].Price)
+					if premiumRateNumber <= r.AlarmMin || premiumRateNumber >= r.AlarmMax {
+						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
+							time.Sleep(time.Second * 1)
+							continue
+						}
+						content = bybitXRPStr
+						content += "\n[Upbit]" +
+							" XRP:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[2].Price, 'f', -1, 64) +
+							"(" + strconv.FormatFloat(premiumRateNumber, 'f', 3, 64) + "%)"
+						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
+						lastAlarmTimestamp = time.Now().Unix()
+						if sendMsg == true {
+							alarmBot.Send(msg)
+						} else {
+							fmt.Println(ruleText + content)
+						}
+					}
+				}
+
+				if r.Symbol == "all" || (r.Symbol == "EOS" && r.Symbol == totalPrices.UpbitPrice.Price[3].Symbol) {
+					premiumRateNumber = premiumRate(totalPrices.BybitPrice.Price[2].Price, totalPrices.UpbitPrice.Price[3].Price)
+					if premiumRateNumber <= r.AlarmMin || premiumRateNumber >= r.AlarmMax {
+						if lastAlarmTimestamp+int64(env.Period["alarm"]/time.Second) > time.Now().Unix() {
+							time.Sleep(time.Second * 1)
+							continue
+						}
+						content = bybitEOSStr
+						content += "\n[Upbit]" +
+							" EOS:" + strconv.FormatFloat(totalPrices.UpbitPrice.Price[3].Price, 'f', -1, 64) +
+							"(" + strconv.FormatFloat(premiumRateNumber, 'f', 3, 64) + "%)"
 						msg := tgbotapi.NewMessage(env.Alarm.ChatID, ruleText+content)
 						lastAlarmTimestamp = time.Now().Unix()
 						if sendMsg == true {
@@ -525,15 +611,22 @@ func setEnvs(env *envs) {
 	ruleAlarmMin, _ := strconv.ParseFloat(os.Getenv("RuleAlarmMin"), 64)
 	env.Rules = append(env.Rules, rule{
 		Use:      ruleUse,
-		Symbol:   "ETH",
-		Exchange: "upbit",
+		Symbol:   "XRP",
+		Exchange: "all",
 		AlarmMax: ruleAlarmMax,
 		AlarmMin: ruleAlarmMin,
 	})
 	env.Rules = append(env.Rules, rule{
 		Use:      ruleUse,
 		Symbol:   "ETH",
-		Exchange: "bithumb",
+		Exchange: "all",
+		AlarmMax: ruleAlarmMax,
+		AlarmMin: ruleAlarmMin,
+	})
+	env.Rules = append(env.Rules, rule{
+		Use:      ruleUse,
+		Symbol:   "BTC",
+		Exchange: "all",
 		AlarmMax: ruleAlarmMax,
 		AlarmMin: ruleAlarmMin,
 	})
