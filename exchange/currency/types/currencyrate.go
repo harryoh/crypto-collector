@@ -2,5 +2,6 @@ package types
 
 // CurrencyRate :
 type CurrencyRate struct {
-	USDKRW float64 `json:"USD_KRW"`
+	Update int64     `json:"update"`
+	USDKRW []float64 `json:"USDKRW"`
 }
