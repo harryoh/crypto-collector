@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	baseURL = "https://exchange.jaeheon.kr:23490"
+	baseURL = "https://free.currconv.com"
 )
 
 // InvalidParams :
@@ -36,6 +36,7 @@ func NewClient() *Client {
 // CurrencyRate :
 func (client *Client) CurrencyRate(
 	currency string,
+	apiKey string,
 ) (rate *types.CurrencyRate, err error) {
 	if !isValidCurrency(currency) {
 		err = &InvalidParams{
@@ -44,7 +45,7 @@ func (client *Client) CurrencyRate(
 		return
 	}
 
-	options := &util.RequestOptions{URL: baseURL + "/query/" + currency}
+	options := &util.RequestOptions{URL: baseURL + "/api/v7/convert?q=" + currency + "&compact=ultra&apiKey=" + apiKey}
 	err = util.Request(client.httpClient, options, &rate)
 	return
 }
