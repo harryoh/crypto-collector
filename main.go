@@ -193,18 +193,18 @@ func bybitLastPrice(env *envs, c chan Prices) {
 	}
 }
 
-// for currconv
+// for dunamu
 func currencyRate(env *envs, c chan Prices) {
 	val := &Prices{
 		Name: "currency",
 	}
 	for {
 		val.Price = make([]Price, 0)
-		markets := []string{"USD_KRW"}
+		markets := []string{"KRWUSD"}
 
 		currencyClient := currency.NewClient()
 		for _, market := range markets {
-			rate, err := currencyClient.CurrencyRate(market, env.CurrencyAPIKey)
+			rate, err := currencyClient.CurrencyRate(market)
 			if err != nil {
 				fmt.Print("currencyRate Error: ")
 				fmt.Println(err)
@@ -214,7 +214,7 @@ func currencyRate(env *envs, c chan Prices) {
 
 			price := &Price{
 				Symbol:    market,
-				Price:     rate.USDKRW,
+				Price:     (*rate)[0].USDKRW,
 				Timestamp: time.Now().Unix(),
 			}
 			val.Price = append(val.Price, *price)
@@ -224,6 +224,38 @@ func currencyRate(env *envs, c chan Prices) {
 		time.Sleep(env.Period["currency"])
 	}
 }
+
+// for currconv
+// func currencyRate(env *envs, c chan Prices) {
+// 	val := &Prices{
+// 		Name: "currency",
+// 	}
+// 	for {
+// 		val.Price = make([]Price, 0)
+// 		markets := []string{"USD_KRW"}
+
+// 		currencyClient := currency.NewClient()
+// 		for _, market := range markets {
+// 			rate, err := currencyClient.CurrencyRate(market, env.CurrencyAPIKey)
+// 			if err != nil {
+// 				fmt.Print("currencyRate Error: ")
+// 				fmt.Println(err)
+// 				time.Sleep(env.Period["currency"])
+// 				continue
+// 			}
+
+// 			price := &Price{
+// 				Symbol:    market,
+// 				Price:     rate.USDKRW,
+// 				Timestamp: time.Now().Unix(),
+// 			}
+// 			val.Price = append(val.Price, *price)
+// 		}
+// 		val.Timestamp = time.Now().Unix()
+// 		c <- *val
+// 		time.Sleep(env.Period["currency"])
+// 	}
+// }
 
 // for jaeheon
 // func currencyRate(env *envs, c chan Prices) {
