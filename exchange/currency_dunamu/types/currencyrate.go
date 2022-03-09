@@ -42,5 +42,5 @@ package types
 
 type CurrencyRate []struct {
 	Update string  `json:"modifiedAt"`
-	USDKRW float64 `json:"basePrice"`
+	KRWUSD float64 `json:"basePrice"`
 }
