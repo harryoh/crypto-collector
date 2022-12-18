@@ -11,6 +11,8 @@ services:
       - server
   server:
     image: harryoh/crypto-collector
+    build:
+      context: .
     restart: unless-stopped
     volumes:
       - .env:/opt/app/.env

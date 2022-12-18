@@ -4,7 +4,8 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /usr/src/app
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-s' -v
+#RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-s' -v
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-s' -v
 
 #####
 
