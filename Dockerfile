@@ -17,7 +17,7 @@ RUN apk add --no-cache tzdata
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/src/app/crypto-collector .
-COPY ui/build ./ui/build
+# COPY ui/dist ./ui/dist
 
 EXPOSE 8080
 
