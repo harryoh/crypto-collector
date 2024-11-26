@@ -1,7 +1,7 @@
 const state = {
   currencyRate: {
-    fixExchangeRate: 1200,
-    exchangeRate: 1200
+    fixExchangeRate: 1300,
+    exchangeRate: 1300
   },
   bybitPrice: {
     BTC: 0,
@@ -40,7 +40,8 @@ const mutations = {
   },
   SET_CURRENCY: (state, value) => {
     // state[key] = Object.assign(state[key], value)
-    value.fixExchangeRate = 1200
+    value.fixExchangeRate = state.currencyRate.fixExchangeRate
+    value.Timestamp = new Date().getTime() / 1000
     state.currencyRate = value
   }
 }

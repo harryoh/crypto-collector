@@ -33,6 +33,8 @@ export default {
   methods: {
     fetchData () {
       getPrice().then(response => {
+        const currency = Number(response.value.replace(/[^0-9.-]+/g, ''))
+        this.$store.dispatch('prices/setCurrency', { exchangeRate: currency })
         const prices = response.data
         for (const item in prices) {
           switch (item) {
@@ -62,10 +64,10 @@ export default {
               break
           }
         }
-        this.loop && setTimeout(this.fetchData, 10000)
+        this.loop && setTimeout(this.fetchData, 60000)
       }).catch(err => {
         console.error(err)
-        this.loop && setTimeout(this.fetchData, 10000)
+        this.loop && setTimeout(this.fetchData, 60000)
       })
     },
     toTimeStrFull (val) {
